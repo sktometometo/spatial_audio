@@ -13,10 +13,10 @@ int main( int argc, char** argv )
 
     //
     double max_duration;
-    nh_private.param<double>("max_duration", max_duration, 5.0);
+    nh_private.param<double>("max_duration", max_duration, 10.0);
 
     //
-    tf2_ros::Buffer            tf_buffer(ros::Duration(max_duration*2));
+    tf2_ros::Buffer            tf_buffer(ros::Duration(max_duration));
     tf2_ros::TransformListener tf_listener(tf_buffer);
 
     //
