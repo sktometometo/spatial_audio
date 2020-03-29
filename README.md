@@ -2,12 +2,22 @@
 
 This package provides spatial audio playing capability according to ROS tf information with ear phones.
 
+## Demo
+
+[![ROS spatial_audio package demo](http://img.youtube.com/vi/pSQuZLvTWOg/0.jpg)](https://www.youtube.com/watch?v=pSQuZLvTWOg)
+
 ## Dependencies
 
 These package depend on libraries and packages below.
 
 - [OpenAL-soft](https://github.com/kcat/openal-soft)
 - [audio_stream](https://github.com/sktometometo/audio_stream)
+
+## How to use
+
+Please see README.md in spatial_audio package directory for detailed description of the spatial_audio server.
+
+For client examples, please refer spatial_audio_demo/launch/interactive_demo.launch and spatial_audio_demo/scripts/simple_client.py
 
 ## LICENSE
 
