@@ -49,8 +49,8 @@ def main():
     topicname_info = '~info'
 
     # publishers
-    publisher_data = rospy.Publisher( topicname_data, AudioData, queue_size=1000 )
-    publisher_info = rospy.Publisher( topicname_info, AudioInfo, queue_size=10 )
+    publisher_data = rospy.Publisher( topicname_data, AudioData, queue_size=1 )
+    publisher_info = rospy.Publisher( topicname_info, AudioInfo, queue_size=1 )
 
     # message
     msg_data = AudioData()

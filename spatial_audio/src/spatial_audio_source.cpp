@@ -107,7 +107,7 @@ bool SpatialAudioSource::init( ros::NodeHandle& nh, spatial_audio_msgs::PlaySpat
     this->stream_subscriber_ =
         nh.subscribe<audio_stream_msgs::AudioData>(
                 req.stream_topic_audio,
-                1000,
+                1,
                 &SpatialAudioSource::callbackAudioStream,
                 this );
     /**
