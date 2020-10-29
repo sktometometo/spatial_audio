@@ -11,6 +11,7 @@
 // OpenAL headers
 #include <AL/al.h>
 #include <AL/alc.h>
+#include <AL/alext.h>
 // ROS
 #include <audio_stream_msgs/AudioData.h>
 #include <audio_stream_msgs/AudioInfo.h>
@@ -75,6 +76,7 @@ namespace spatial_audio {
              */
             ALCcontext* context_;
             ALCdevice* device_;
+            std::string hrtfname_;
 
             /**
              * ROS related resources

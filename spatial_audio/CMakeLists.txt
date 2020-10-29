@@ -51,3 +51,8 @@ target_link_libraries(
     ${Boost_LIBRARIES}
     ${OPENAL_LIBRARY}
 )
+target_compile_definitions(
+    spatial_audio_server_node
+    PRIVATE
+    AL_ALEXT_PROTOTYPES
+)

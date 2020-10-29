@@ -19,6 +19,7 @@
 // OpenAL headers
 #include <AL/al.h>
 #include <AL/alc.h>
+#include <AL/alext.h>
 // USER
 #include <spatial_audio/spatial_audio_source.h>
 #include <spatial_audio/spatial_audio_server.h>
@@ -35,6 +36,7 @@ SpatialAudioServer::SpatialAudioServer( ros::NodeHandle& nh,
     int num_spinthread;
     this->nh_private_.param<std::string>( "head_frame_id", this->head_frame_id_, "head_link" );
     this->nh_private_.param<int>( "num_spinthread", num_spinthread, 5 );
+    this->nh_private_.param<std::string>( "hrtfname", this->hrtfname_, "" );
 
     // Service
     this->srv_= this->nh_private_.advertiseService<
@@ -61,6 +63,7 @@ SpatialAudioServer::SpatialAudioServer( ros::NodeHandle& nh,
     } else {
         ROS_INFO( "Created a default context." );
     }
+
     // setting up listener pose
     alcSuspendContext( this->context_ );
     {
@@ -99,6 +102,60 @@ SpatialAudioServer::~SpatialAudioServer()
 
 void SpatialAudioServer::spin( int spin_rate )
 {
+    // Prepairing alsoft configuration with the given hrtf file for OpenAL
+    {
+        if ( !alcIsExtensionPresent( device_, "ALC_SOFT_HRTF" ) ) {
+            ROS_ERROR("ALC_SOFT_HRTF not supported.");
+            return;
+        }
+
+        ALCint num_hrtf;
+        alcGetIntegerv( device_, ALC_NUM_HRTF_SPECIFIERS_SOFT, 1, &num_hrtf );
+        if ( !num_hrtf ) {
+            ROS_ERROR( "No HRTFs found.\n" );
+        } else {
+            int index=-1;
+            ROS_INFO( "Available HRTFs:\n" );
+            for ( int i=0; i<num_hrtf; i++ ) {
+                const ALCchar *name = alcGetStringiSOFT( device_, ALC_HRTF_SPECIFIER_SOFT, i );
+                ROS_INFO( "    %d: %s\n", i, name );
+                if ( hrtfname_ == name ) {
+                    index = i;
+                }
+            }
+
+            ALCint attr[5];
+            if ( hrtfname_.empty() or index == -1 ) {
+                ROS_INFO("Specified HRTF not found or not specified. using default hrtf...");
+                attr[0] = ALC_HRTF_SOFT;
+                attr[1] = ALC_TRUE;
+                attr[2] = 0;
+            } else {
+                ROS_INFO("Specified HRTF found.");
+                attr[0] = ALC_HRTF_SOFT;
+                attr[1] = ALC_TRUE;
+                attr[2] = ALC_HRTF_ID_SOFT;
+                attr[3] = index;
+                attr[4] = 0;
+            }
+
+            if ( !alcResetDeviceSOFT( device_, attr ) ) {
+                ROS_ERROR("Failed to reset device: %s", alcGetString( device_, alcGetError(device_)));
+                return;
+            }
+        }
+
+        ALCint hrtf_state;
+        alcGetIntegerv(device_, ALC_HRTF_SOFT, 1, &hrtf_state);
+        if(!hrtf_state) {
+            ROS_ERROR("HRTF not enabled!");
+            return;
+        } else {
+            const ALchar *name = alcGetString(device_, ALC_HRTF_SPECIFIER_SOFT);
+            ROS_INFO("HRTF enabled, using %s", name);
+        }
+    }
+
     // start callback spinner
     this->ptr_spinner_->start();
 
