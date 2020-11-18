@@ -12,6 +12,7 @@
 #include <ros/ros.h>
 #include <spatial_audio_msgs/PlaySpatialAudio.h>
 #include <tf2_ros/transform_listener.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 // User
 #include <spatial_audio/spatial_audio_source.h>
 #include <spatial_audio/util.h>
@@ -154,8 +155,10 @@ void SpatialAudioSource::updateCoordinate(
         tf2_ros::Buffer &tf_buffer,
         ALCcontext *context )
 {
+    geometry_msgs::TransformStamped transform_reference2head;
+    geometry_msgs::Pose pose_source;
     try {
-        this->source_transform_ =
+        transform_reference2head =
             tf_buffer.lookupTransform(
                     head_frame_id.c_str(),
                     this->source_frame_id_.c_str(),
@@ -169,12 +172,14 @@ void SpatialAudioSource::updateCoordinate(
         return;
     }
 
+    tf2::doTransform( this->source_pose_, pose_source, transform_reference2head );
+
     alcSuspendContext( context );
     {
         ALfloat pos_source[3];
-        pos_source[0] = this->source_transform_.transform.translation.x;
-        pos_source[1] = this->source_transform_.transform.translation.y;
-        pos_source[2] = this->source_transform_.transform.translation.z;
+        pos_source[0] = pose_source.position.x;
+        pos_source[1] = pose_source.position.y;
+        pos_source[2] = pose_source.position.z;
         alSourcefv( this->al_source_id_, AL_POSITION, pos_source );
     }
     alcProcessContext( context );

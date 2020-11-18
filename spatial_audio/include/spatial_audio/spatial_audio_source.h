@@ -90,8 +90,6 @@ namespace spatial_audio {
              */
             std::string source_frame_id_; // the frame_id to which this source is fixed.
             geometry_msgs::Pose source_pose_; // the pose from the origin of source_frame_id to source
-            // these values are updated in update loop
-            geometry_msgs::TransformStamped source_transform_; // latest transformation from head to source.
             /*
              * OpenAL related variables
              */
