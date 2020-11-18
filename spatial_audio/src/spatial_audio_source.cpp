@@ -115,7 +115,7 @@ bool SpatialAudioSource::init( ros::NodeHandle& nh, spatial_audio_msgs::PlaySpat
      * Wait until buffering
      */
     ALsizei n = 0;
-    while ( n < 10 ) {
+    while ( n == 0 ) {
         ros::Duration( 1.0 ).sleep();
         alGetSourcei( this->al_source_id_, AL_BUFFERS_QUEUED, &n );
         ROS_INFO( "waiting for buffering..." );
