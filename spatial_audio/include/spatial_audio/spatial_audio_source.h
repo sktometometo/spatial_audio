@@ -70,6 +70,10 @@ namespace spatial_audio {
              */
             ALint getSourceState();
             /**
+             * Return is the source is playing
+             */
+            bool isPlaying();
+            /**
              * Start playing the source
              */
             void startSourcePlay();

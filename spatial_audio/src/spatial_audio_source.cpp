@@ -215,6 +215,11 @@ ALint SpatialAudioSource::getSourceState()
     return source_state;
 }
 
+bool SpatialAudioSource::isPlaying()
+{
+    return is_playing_;
+}
+
 void SpatialAudioSource::startSourcePlay()
 {
     this->mtx_.lock();
@@ -229,7 +234,6 @@ void SpatialAudioSource::stopSourcePlay()
     alSourceStop( this->al_source_id_ );
     this->is_playing_ = false;
     this->mtx_.unlock();
-    this->dequeALBuffers();
 }
 
 int SpatialAudioSource::getAudioSourceID()
