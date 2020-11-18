@@ -20,6 +20,7 @@ def main():
     req.pose.orientation.x = 1
     req.stream_topic_audio = source_topicname_audio
     req.stream_topic_info = source_topicname_info
+    req.auto_play = True
     # service call
     rospy.wait_for_service( source_service_name );
     try:
