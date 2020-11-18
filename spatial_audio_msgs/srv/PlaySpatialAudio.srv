@@ -1,9 +1,10 @@
 #
 uint8 ADD=1
-uint8 DELETE=2
-uint8 DELETEALL=3
-uint8 STOP=4
-uint8 PLAY=5
+uint8 UPDATE=2
+uint8 DELETE=3
+uint8 DELETEALL=4
+uint8 STOP=5
+uint8 PLAY=6
 
 # Req
 Header header

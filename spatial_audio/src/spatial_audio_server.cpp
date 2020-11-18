@@ -206,6 +206,19 @@ bool SpatialAudioServer::handlerPlayService(
 
             break;
 
+        case spatial_audio_msgs::PlaySpatialAudio::Request::UPDATE:
+
+            ROS_INFO("ADD action recieved");
+
+            this->mtx_audio_source_.lock();
+            this->updateSource( req.id, req );
+            this->mtx_audio_source_.unlock();
+
+            ret = true;
+            res.is_success = ret;
+
+            break;
+
         case spatial_audio_msgs::PlaySpatialAudio::Request::DELETE:
 
             ROS_INFO("DELETE action recieved");
@@ -291,8 +304,21 @@ bool SpatialAudioServer::delSource( int id )
     if ( itr != this->list_audio_source_.end() ) {
         itr->close();
         this->list_audio_source_.erase( itr );
+        return true;
+    } else {
+        return false;
     }
-    return true;
+}
+
+bool SpatialAudioServer::updateSource( int id, spatial_audio_msgs::PlaySpatialAudio::Request &req )
+{
+    auto itr = this->findSource( id );
+    if ( itr != this->list_audio_source_.end() ) {
+        itr->update( req.header.frame_id, req.pose, req.stream_topic_info, req.stream_topic_audio );
+        return true;
+    } else {
+        return false;
+    }
 }
 
 std::list<SpatialAudioSource>::iterator SpatialAudioServer::findSource( int id )

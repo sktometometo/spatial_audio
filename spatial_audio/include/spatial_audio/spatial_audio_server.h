@@ -61,6 +61,10 @@ namespace spatial_audio {
              */
             bool delSource( int id );
             /**
+             * update an audio source
+             */
+            bool updateSource( int id, spatial_audio_msgs::PlaySpatialAudio::Request &req );
+            /**
              * check if there is an audio source object with a specified id
              * @param[in] id id number of an audio source to check
              */

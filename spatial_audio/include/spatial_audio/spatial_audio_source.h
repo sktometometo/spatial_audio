@@ -60,6 +60,15 @@ namespace spatial_audio {
              */
             void close();
             /**
+             * update parameters of and audio source
+             */
+            void update(
+                    std::string& reference_frame_id,
+                    geometry_msgs::Pose& source_pose,
+                    std::string& stream_topic_info,
+                    std::string& stream_topic_audio
+                    );
+            /**
              * update the pose of an audio source
              * @param[in] head_frame_id frame_id of a head
              * @param[in] tf_buffer tf2_ros buffer

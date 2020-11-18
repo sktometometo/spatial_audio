@@ -160,6 +160,20 @@ void SpatialAudioSource::close()
     this->is_init_ = false;
 }
 
+void SpatialAudioSource::update(
+        std::string& reference_frame_id,
+        geometry_msgs::Pose& source_pose,
+        std::string& stream_topic_info,
+        std::string& stream_topic_audio
+        )
+{
+    this->mtx_.lock();
+    this->source_frame_id_ = reference_frame_id;
+    this->source_pose_ = source_pose;
+    // TODO: update process for ros topic
+    this->mtx_.unlock();
+}
+
 void SpatialAudioSource::updateCoordinate(
         std::string &head_frame_id,
         tf2_ros::Buffer &tf_buffer,
@@ -167,6 +181,7 @@ void SpatialAudioSource::updateCoordinate(
 {
     geometry_msgs::TransformStamped transform_reference2head;
     geometry_msgs::Pose pose_source;
+    this->mtx_.lock();
     try {
         transform_reference2head =
             tf_buffer.lookupTransform(
@@ -176,13 +191,15 @@ void SpatialAudioSource::updateCoordinate(
                     );
     } catch (const tf2::LookupException& e) {
         ROS_ERROR( "%s", e.what() );
+        this->mtx_.unlock();
         return;
     } catch (const tf2::ExtrapolationException& e) {
         ROS_ERROR( "%s", e.what() );
+        this->mtx_.unlock();
         return;
     }
-
     tf2::doTransform( this->source_pose_, pose_source, transform_reference2head );
+    this->mtx_.unlock();
 
     alcSuspendContext( context );
     {
