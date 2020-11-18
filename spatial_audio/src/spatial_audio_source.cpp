@@ -164,6 +164,9 @@ void SpatialAudioSource::updateCoordinate(
     } catch (const tf2::LookupException& e) {
         ROS_ERROR( "%s", e.what() );
         return;
+    } catch (const tf2::ExtrapolationException& e) {
+        ROS_ERROR( "%s", e.what() );
+        return;
     }
 
     alcSuspendContext( context );
