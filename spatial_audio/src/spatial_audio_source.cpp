@@ -27,12 +27,16 @@ SpatialAudioSource::SpatialAudioSource()
 
 SpatialAudioSource::SpatialAudioSource(
         ros::NodeHandle& nh,
-        spatial_audio_msgs::PlaySpatialAudio::Request& req,
+        int id,
+        std::string reference_frame_id,
+        geometry_msgs::Pose source_pose,
+        std::string stream_topic_info,
+        std::string stream_topic_audio,
         bool auto_play )
 {
     this->is_init_ = false;
     this->is_playing_ = false;
-    if ( not this->init(nh,req,auto_play) ) {
+    if ( not this->init(nh,id,reference_frame_id,source_pose,stream_topic_info,stream_topic_audio,auto_play) ) {
         this->is_init_ = false;
     } else {
         this->is_init_ = true;
@@ -49,7 +53,11 @@ SpatialAudioSource::~SpatialAudioSource()
 
 bool SpatialAudioSource::init(
         ros::NodeHandle& nh,
-        spatial_audio_msgs::PlaySpatialAudio::Request &req,
+        int id,
+        std::string reference_frame_id,
+        geometry_msgs::Pose source_pose,
+        std::string stream_topic_info,
+        std::string stream_topic_audio,
         bool auto_play )
 {
     bool ret = true;
@@ -59,26 +67,20 @@ bool SpatialAudioSource::init(
         return false;
     }
 
-    // req の action が ADD でなければ弾く. assert の方が良い?
-    if ( req.action !=  spatial_audio_msgs::PlaySpatialAudio::Request::ADD ) {
-        ROS_ERROR( "The action of a given request is not ADD." );
-        ret = false;
-    }
-
     // initialization
     /**
      * initialization of members
      */
-    this->id_ = req.id;
-    this->source_frame_id_ = req.header.frame_id;
-    this->source_pose_ = req.pose;
+    this->id_ = id;
+    this->source_frame_id_ = reference_frame_id;
+    this->source_pose_ = source_pose;
     /**
      * Get a audio info message for meta information of audio stream
      */
     audio_stream_msgs::AudioInfo::ConstPtr info =
-        ros::topic::waitForMessage<audio_stream_msgs::AudioInfo>( req.stream_topic_info );
+        ros::topic::waitForMessage<audio_stream_msgs::AudioInfo>( stream_topic_info );
     if ( not info ) {
-        ROS_ERROR( "Cannot retrive a message from info topic: %s", req.stream_topic_info.c_str() );
+        ROS_ERROR( "Cannot retrive a message from info topic: %s", stream_topic_info.c_str() );
         return false;
     }
     if ( info->channels == audio_stream_msgs::AudioInfo::AUDIOINFO_CHANNELS_MONAURAL
@@ -119,7 +121,7 @@ bool SpatialAudioSource::init(
      */
     this->stream_subscriber_ =
         nh.subscribe<audio_stream_msgs::AudioData>(
-                req.stream_topic_audio,
+                stream_topic_audio,
                 1,
                 &SpatialAudioSource::callbackAudioStream,
                 this );
@@ -135,7 +137,7 @@ bool SpatialAudioSource::init(
     /**
      * Debug print
      */
-    ROS_INFO( "Add an audio source object. id: %d, frame_id: %s, stream topic: %s", this->id_, this->source_frame_id_.c_str(), req.stream_topic_audio.c_str() );
+    ROS_INFO( "Add an audio source object. id: %d, frame_id: %s, stream topic: %s", this->id_, this->source_frame_id_.c_str(), stream_topic_audio.c_str() );
     /**
      * return
      */

@@ -16,6 +16,8 @@ geometry_msgs/Pose pose
 string stream_topic_audio
 string stream_topic_info
 
+bool auto_play
+
 ---
 # Res
 bool is_success

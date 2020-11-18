@@ -25,7 +25,11 @@ namespace spatial_audio {
 
             SpatialAudioSource();
             SpatialAudioSource( ros::NodeHandle& nh,
-                                spatial_audio_msgs::PlaySpatialAudio::Request& req,
+                                int id,
+                                std::string reference_frame_id,
+                                geometry_msgs::Pose source_pose,
+                                std::string stream_topic_info,
+                                std::string stream_topic_audio,
                                 bool auto_play = true );
             ~SpatialAudioSource();
             /**
@@ -45,7 +49,11 @@ namespace spatial_audio {
              * @param[in] auto_play flag whether to start to play the source automtically
              */
             bool init( ros::NodeHandle& nh,
-                       spatial_audio_msgs::PlaySpatialAudio::Request &req,
+                       int id,
+                       std::string reference_frame_id,
+                       geometry_msgs::Pose source_pose,
+                       std::string stream_topic_info,
+                       std::string stream_topic_audio,
                        bool auto_play = true );
             /**
              * Finalization function. This function should be called when an audio source is discarded.
