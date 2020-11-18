@@ -25,7 +25,8 @@ namespace spatial_audio {
 
             SpatialAudioSource();
             SpatialAudioSource( ros::NodeHandle& nh,
-                                spatial_audio_msgs::PlaySpatialAudio::Request& req );
+                                spatial_audio_msgs::PlaySpatialAudio::Request& req,
+                                bool auto_play = true );
             ~SpatialAudioSource();
             /**
              * non copyable settings due to mutex
@@ -41,9 +42,11 @@ namespace spatial_audio {
              * Initialzation function. This function must be called before an object is actually used.
              * @param[in] nh ros node handler
              * @param[in] req a request of an audio source to add
+             * @param[in] auto_play flag whether to start to play the source automtically
              */
             bool init( ros::NodeHandle& nh,
-                       spatial_audio_msgs::PlaySpatialAudio::Request &req );
+                       spatial_audio_msgs::PlaySpatialAudio::Request &req,
+                       bool auto_play = true );
             /**
              * Finalization function. This function should be called when an audio source is discarded.
              */
@@ -71,6 +74,10 @@ namespace spatial_audio {
              */
             void startSourcePlay();
             /**
+             * Stop playing the source
+             */
+            void stopSourcePlay();
+            /**
              * Get Audio Source ID
              */
             int getAudioSourceID();
@@ -85,6 +92,7 @@ namespace spatial_audio {
             int id_; // audio source id
             std::mutex mtx_; // mutex for controling access to the resource
             bool is_init_; // flag if Initialzation is done
+            bool is_playing_; // flag if the source is playing
             /*
              * ROS related variables
              */

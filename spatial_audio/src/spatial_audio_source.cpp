@@ -22,14 +22,17 @@ namespace spatial_audio {
 SpatialAudioSource::SpatialAudioSource()
 {
     this->is_init_ = false;
+    this->is_playing_ = false;
 }
 
 SpatialAudioSource::SpatialAudioSource(
         ros::NodeHandle& nh,
-        spatial_audio_msgs::PlaySpatialAudio::Request& req )
+        spatial_audio_msgs::PlaySpatialAudio::Request& req,
+        bool auto_play )
 {
     this->is_init_ = false;
-    if ( not this->init(nh,req) ) {
+    this->is_playing_ = false;
+    if ( not this->init(nh,req,auto_play) ) {
         this->is_init_ = false;
     } else {
         this->is_init_ = true;
@@ -44,7 +47,10 @@ SpatialAudioSource::~SpatialAudioSource()
     }
 }
 
-bool SpatialAudioSource::init( ros::NodeHandle& nh, spatial_audio_msgs::PlaySpatialAudio::Request &req )
+bool SpatialAudioSource::init(
+        ros::NodeHandle& nh,
+        spatial_audio_msgs::PlaySpatialAudio::Request &req,
+        bool auto_play )
 {
     bool ret = true;
 
@@ -103,6 +109,12 @@ bool SpatialAudioSource::init( ros::NodeHandle& nh, spatial_audio_msgs::PlaySpat
     // referece: https://stackoverflow.com/questions/6990701/why-would-alsourceunqueuebuffers-fail-with-invalid-operation
     alSourcei( this->al_source_id_, AL_LOOPING, AL_FALSE );
     /**
+     * start playing if auto_play arg is true
+     */
+    if ( auto_play ) {
+        this->startSourcePlay();
+    }
+    /**
      * Subscribe the audio stream topic
      */
     this->stream_subscriber_ =
@@ -120,10 +132,6 @@ bool SpatialAudioSource::init( ros::NodeHandle& nh, spatial_audio_msgs::PlaySpat
         alGetSourcei( this->al_source_id_, AL_BUFFERS_QUEUED, &n );
         ROS_INFO( "waiting for buffering..." );
     }
-    /**
-     * start playing
-     */
-    alSourcePlay( this->al_source_id_ );
     /**
      * Debug print
      */
@@ -209,7 +217,19 @@ ALint SpatialAudioSource::getSourceState()
 
 void SpatialAudioSource::startSourcePlay()
 {
+    this->mtx_.lock();
+    this->is_playing_ = true;
     alSourcePlay( this->al_source_id_ );
+    this->mtx_.unlock();
+}
+
+void SpatialAudioSource::stopSourcePlay()
+{
+    this->mtx_.lock();
+    alSourceStop( this->al_source_id_ );
+    this->is_playing_ = false;
+    this->mtx_.unlock();
+    this->dequeALBuffers();
 }
 
 int SpatialAudioSource::getAudioSourceID()
@@ -222,19 +242,26 @@ void SpatialAudioSource::callbackAudioStream( const boost::shared_ptr<audio_stre
     this->dequeALBuffers();
 
     // enqueue a new buffer with recieved data
-    ALuint buffer_id;
-    ALsizei buffer_size = ptr_msg->data.size();
-    genBufferFromPCM(
-            buffer_id,
-            (ALvoid*)ptr_msg->data.data(),
-            buffer_size,
-            this->stream_sampling_rate_,
-            this->stream_format_ );
-    this->mtx_.lock();
-    alSourceQueueBuffers( this->al_source_id_, 1, &buffer_id );
-    this->mtx_.unlock();
+    if ( this->is_playing_ ) {
+        ALuint buffer_id;
+        ALsizei buffer_size = ptr_msg->data.size();
+        genBufferFromPCM(
+                buffer_id,
+                (ALvoid*)ptr_msg->data.data(),
+                buffer_size,
+                this->stream_sampling_rate_,
+                this->stream_format_ );
+        this->mtx_.lock();
+        alSourceQueueBuffers( this->al_source_id_, 1, &buffer_id );
+        this->mtx_.unlock();
 
-    ROS_DEBUG( "New data containes %d bytes.", buffer_size );
+        if ( this->getSourceState() != AL_PLAYING ) {
+            this->startSourcePlay();
+        }
+
+        ROS_DEBUG( "New data containes %d bytes.", buffer_size );
+    }
+
 }
 
 

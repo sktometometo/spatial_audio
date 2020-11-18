@@ -231,6 +231,38 @@ bool SpatialAudioServer::handlerPlayService(
 
             break;
 
+        case spatial_audio_msgs::PlaySpatialAudio::Request::STOP:
+
+            ROS_INFO("Stop requet recieved");
+
+            this->mtx_audio_source_.lock();
+            {
+                auto itr = this->findSource( req.id );
+                itr->stopSourcePlay();
+            }
+            this->mtx_audio_source_.unlock();
+
+            ret = true;
+            res.is_success = true;
+
+            break;
+
+        case spatial_audio_msgs::PlaySpatialAudio::Request::PLAY:
+
+            ROS_INFO("Play requet recieved");
+
+            this->mtx_audio_source_.lock();
+            {
+                auto itr = this->findSource( req.id );
+                itr->startSourcePlay();
+            }
+            this->mtx_audio_source_.unlock();
+
+            ret = true;
+            res.is_success = true;
+
+            break;
+
         default:
 
             ROS_ERROR("Unknown action recieved.");
