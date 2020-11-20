@@ -32,7 +32,8 @@ SpatialAudioSource::SpatialAudioSource(
         geometry_msgs::Pose source_pose,
         std::string stream_topic_info,
         std::string stream_topic_audio,
-        bool auto_play )
+        bool auto_play,
+        int initial_buffer_num )
 {
     this->is_init_ = false;
     this->is_playing_ = false;
@@ -58,7 +59,8 @@ bool SpatialAudioSource::init(
         geometry_msgs::Pose source_pose,
         std::string stream_topic_info,
         std::string stream_topic_audio,
-        bool auto_play )
+        bool auto_play,
+        int initial_buffer_num )
 {
     bool ret = true;
 
@@ -129,15 +131,15 @@ bool SpatialAudioSource::init(
      * Wait until buffering
      */
     ALsizei n = 0;
-    while ( n == 0 ) {
+    while ( n < initial_buffer_num ) {
         ros::Duration( 1.0 ).sleep();
         alGetSourcei( this->al_source_id_, AL_BUFFERS_QUEUED, &n );
-        ROS_INFO( "waiting for buffering..." );
+        ROS_DEBUG( "waiting for buffering for id: %d with topic: %s...", this->id_, stream_topic_audio.c_str() );
     }
     /**
      * Debug print
      */
-    ROS_INFO( "Add an audio source object. id: %d, frame_id: %s, stream topic: %s", this->id_, this->source_frame_id_.c_str(), stream_topic_audio.c_str() );
+    ROS_DEBUG( "Add an audio source object. id: %d, frame_id: %s, stream topic: %s", this->id_, this->source_frame_id_.c_str(), stream_topic_audio.c_str() );
     /**
      * return
      */
@@ -158,6 +160,11 @@ void SpatialAudioSource::close()
     // release source obect
     alDeleteSources( 1, &this->al_source_id_ );
     this->is_init_ = false;
+}
+
+void SpatialAudioSource::verbose()
+{
+    ROS_DEBUG_STREAM( "audio source id:" << this->id_ << " is_init:" << this->is_init_ << " is_playing:" << this->is_playing_ );
 }
 
 void SpatialAudioSource::update(
@@ -224,7 +231,7 @@ void SpatialAudioSource::dequeALBuffers()
     delete[] buffers;
     alGetSourcei( this->al_source_id_, AL_BUFFERS_QUEUED, &m );
 
-    ROS_INFO( "id:%d, %d buffers processed, %d buffers remains.", this->id_, n, m );
+    ROS_DEBUG( "id:%d, %d buffers processed, %d buffers remains.", this->id_, n, m );
 }
 
 ALint SpatialAudioSource::getSourceState()

@@ -30,7 +30,8 @@ namespace spatial_audio {
                                 geometry_msgs::Pose source_pose,
                                 std::string stream_topic_info,
                                 std::string stream_topic_audio,
-                                bool auto_play = true );
+                                bool auto_play = true,
+                                int initial_buffer_num = 1 );
             ~SpatialAudioSource();
             /**
              * non copyable settings due to mutex
@@ -54,11 +55,16 @@ namespace spatial_audio {
                        geometry_msgs::Pose source_pose,
                        std::string stream_topic_info,
                        std::string stream_topic_audio,
-                       bool auto_play = true );
+                       bool auto_play = true,
+                       int initial_buffer_num = 1 );
             /**
              * Finalization function. This function should be called when an audio source is discarded.
              */
             void close();
+            /**
+             * print audio source information to ros logging system
+             */
+            void verbose();
             /**
              * update parameters of and audio source
              */

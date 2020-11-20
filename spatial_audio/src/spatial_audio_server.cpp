@@ -335,6 +335,7 @@ void SpatialAudioServer::updateCoordinates()
     /* Update transforms */
     for ( auto itr = this->list_audio_source_.begin(); itr != this->list_audio_source_.end(); itr++  ) {
         itr->updateCoordinate( this->head_frame_id_, this->tf_buffer_, this->context_ );
+        itr->verbose();
     }
 }
 
