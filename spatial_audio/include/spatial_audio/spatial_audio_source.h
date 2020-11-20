@@ -31,7 +31,8 @@ namespace spatial_audio {
                                 std::string stream_topic_info,
                                 std::string stream_topic_audio,
                                 bool auto_play = true,
-                                int initial_buffer_num = 1 );
+                                int initial_buffer_num = 1,
+                                double timeout = 1.0 );
             ~SpatialAudioSource();
             /**
              * non copyable settings due to mutex
@@ -56,7 +57,8 @@ namespace spatial_audio {
                        std::string stream_topic_info,
                        std::string stream_topic_audio,
                        bool auto_play = true,
-                       int initial_buffer_num = 1 );
+                       int initial_buffer_num = 1,
+                       double timeout = 1.0 );
             /**
              * Finalization function. This function should be called when an audio source is discarded.
              */

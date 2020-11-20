@@ -294,7 +294,7 @@ bool SpatialAudioServer::handlerPlayService(
 bool SpatialAudioServer::addSource( spatial_audio_msgs::PlaySpatialAudio::Request &req )
 {
     auto itr = this->list_audio_source_.emplace( this->list_audio_source_.begin() );
-    bool ret = itr->init( this->nh_, req.id, req.header.frame_id, req.pose, req.stream_topic_info, req.stream_topic_audio, req.auto_play );
+    bool ret = itr->init( this->nh_, req.id, req.header.frame_id, req.pose, req.stream_topic_info, req.stream_topic_audio, req.auto_play, 10 );
     return ret;
 }
 
