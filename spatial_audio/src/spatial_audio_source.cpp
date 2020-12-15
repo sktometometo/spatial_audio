@@ -221,6 +221,18 @@ void SpatialAudioSource::updateCoordinate(
     alcProcessContext( context );
 }
 
+void SpatialAudioSource::setDistanceModel(
+        double distance_reference,
+        double distance_max,
+        double factor_rolloff )
+{
+    alcSuspendContext( context );
+    {
+        j
+    }
+    alcProcessContext( context );
+}
+
 void SpatialAudioSource::dequeALBuffers()
 {
     ALsizei n, m;

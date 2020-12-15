@@ -339,4 +339,29 @@ void SpatialAudioServer::updateCoordinates()
     }
 }
 
+void SpatialAudioServer::setDistanceModel(
+        ALenum model,
+        double distance_reference,
+        double distance_max,
+        double factor_rolloff
+        )
+{
+    //
+    distance_reference_ = distance_reference;
+    distance_max_ = distance_max;
+    factor_rolloff_ = factor_rolloff;
+    //
+    alcSuspendContext( this->context_ );
+    {
+        alDistanceModel( model );
+    }
+    alcProcessContext( this->context_ );
+    //
+    mtx_audio_source_.lock();
+    for ( auto itr = this->list_audio_source_.begin(); itr != this->list_audio_source_.end(); itr++  ) {
+        itr->setDistanceModel( distance_reference, distance_max, factor_rolloff );
+    }
+    mtx_audio_source_.unlock();
+}
+
 }

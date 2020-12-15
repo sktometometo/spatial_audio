@@ -87,6 +87,13 @@ namespace spatial_audio {
                         tf2_ros::Buffer& tf_buffer,
                         ALCcontext* context );
             /**
+             *
+             */
+            void setDistanceModel(
+                        double distance_reference,
+                        double distance_max,
+                        double factor_rolloff );
+            /**
              * deque OpenAL buffers done
              */
             void dequeALBuffers();

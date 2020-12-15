@@ -97,6 +97,13 @@ namespace spatial_audio {
              */
             std::list<SpatialAudioSource> list_audio_source_;
             std::mutex mtx_audio_source_;
+
+            /**
+             * distance modle values
+             */
+            double distance_reference_;
+            double distance_max_;
+            double factor_rolloff_
     };
 }
 
