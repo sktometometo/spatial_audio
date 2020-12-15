@@ -127,7 +127,7 @@ bool SpatialAudioSource::init(
      * start playing if auto_play arg is true
      */
     if ( auto_play ) {
-        this->startSourcePlay();
+        this->is_playing_ = true;
         /**
          * Wait until buffering
          */
@@ -137,6 +137,8 @@ bool SpatialAudioSource::init(
             alGetSourcei( this->al_source_id_, AL_BUFFERS_QUEUED, &n );
             ROS_INFO( "waiting for buffering until %d buffers for id: %d with topic: %s, current buffers: %d...", initial_buffer_num, this->id_, stream_topic_audio.c_str(), n );
         }
+        // start actual playing
+        alSourcePlay( this->al_source_id_ );
     }
     /**
      * Debug print
@@ -191,24 +193,24 @@ void SpatialAudioSource::updateCoordinate(
     geometry_msgs::TransformStamped transform_reference2head;
     geometry_msgs::Pose pose_source;
     this->mtx_.lock();
+    std::string source_frame_id = this->source_frame_id_;
+    geometry_msgs::Pose source_pose = this->source_pose_;
+    this->mtx_.unlock();
     try {
         transform_reference2head =
             tf_buffer.lookupTransform(
                     head_frame_id.c_str(),
-                    this->source_frame_id_.c_str(),
+                    source_frame_id.c_str(),
                     ros::Time(0)
                     );
     } catch (const tf2::LookupException& e) {
         ROS_ERROR( "%s", e.what() );
-        this->mtx_.unlock();
         return;
     } catch (const tf2::ExtrapolationException& e) {
         ROS_ERROR( "%s", e.what() );
-        this->mtx_.unlock();
         return;
     }
-    tf2::doTransform( this->source_pose_, pose_source, transform_reference2head );
-    this->mtx_.unlock();
+    tf2::doTransform( source_pose, pose_source, transform_reference2head );
 
     alcSuspendContext( context );
     {
@@ -216,7 +218,9 @@ void SpatialAudioSource::updateCoordinate(
         pos_source[0] = pose_source.position.x;
         pos_source[1] = pose_source.position.y;
         pos_source[2] = pose_source.position.z;
+        this->mtx_.lock();
         alSourcefv( this->al_source_id_, AL_POSITION, pos_source );
+        this->mtx_.unlock();
     }
     alcProcessContext( context );
 }
@@ -228,10 +232,10 @@ void SpatialAudioSource::dequeALBuffers()
     alGetSourcei( this->al_source_id_, AL_BUFFERS_PROCESSED, &n ); // get a number of buffers processed.
     ALuint* buffers = new ALuint[n]; // These buffers should be released. Maybe shared_ptr should be used.
     alSourceUnqueueBuffers( this->al_source_id_, n, buffers ); // unqueue the buffers
-    this->mtx_.unlock();
     alDeleteBuffers( n, buffers );
     delete[] buffers;
     alGetSourcei( this->al_source_id_, AL_BUFFERS_QUEUED, &m );
+    this->mtx_.unlock();
 
     ROS_INFO( "id:%d, %d buffers processed, %d buffers remains.", this->id_, n, m );
 }
@@ -287,13 +291,14 @@ void SpatialAudioSource::callbackAudioStream( const boost::shared_ptr<audio_stre
         alSourceQueueBuffers( this->al_source_id_, 1, &buffer_id );
         this->mtx_.unlock();
 
-        if ( this->getSourceState() != AL_PLAYING ) {
-            this->startSourcePlay();
-        }
-
         ROS_INFO( "New data containes %d bytes.", buffer_size );
     }
 
+    if ( this->is_playing_
+            and this->is_init_
+            and this->getSourceState() != AL_PLAYING ) {
+        alSourcePlay( this->al_source_id_ );
+    }
 }
 
 

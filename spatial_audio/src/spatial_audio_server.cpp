@@ -162,10 +162,10 @@ void SpatialAudioServer::spin( int spin_rate )
     // start main loop
     ros::Rate r( spin_rate );
     while ( ros::ok() ) {
-        std::vector<int> vector_finished_id;
-        mtx_audio_source_.lock();
+        this->mtx_audio_source_.lock();
         /*
         // TODO: timeout したもののみを vector_finished に入れる
+        std::vector<int> vector_finished_id;
         for ( auto itr = this->list_audio_source_.begin(); itr != this->list_audio_source_.end(); itr++  ) {
             ALint source_state = itr->getSourceState();
             if ( source_state != AL_PLAYING ) {
@@ -175,12 +175,14 @@ void SpatialAudioServer::spin( int spin_rate )
         for ( int i = 0; i < vector_finished_id.size(); i++ ) {
             this->delSource( vector_finished_id[i] );
         }
-        */
-        this->updateCoordinates();
         ROS_INFO( "Spinning, Finished: %ld, Playing: %ld",
                     vector_finished_id.size(),
                     this->list_audio_source_.size() - vector_finished_id.size() );
-        mtx_audio_source_.unlock();
+        */
+        std::vector<int> vector_stopped_id;
+        std::vector<int> vector_playing_id;
+        this->updateCoordinates();
+        this->mtx_audio_source_.unlock();
         r.sleep();
     }
 }
