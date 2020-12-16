@@ -127,6 +127,9 @@ bool SpatialAudioSource::init(
      * start playing if auto_play arg is true
      */
     if ( auto_play ) {
+        /**
+         * Start Buffering
+         */
         this->is_playing_ = true;
         /**
          * Wait until buffering

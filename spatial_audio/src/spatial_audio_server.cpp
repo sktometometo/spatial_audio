@@ -197,7 +197,7 @@ bool SpatialAudioServer::handlerPlayService(
 
         case spatial_audio_msgs::PlaySpatialAudio::Request::ADD:
 
-            ROS_INFO("ADD action recieved");
+            ROS_INFO("ADD request recieved");
 
             this->mtx_audio_source_.lock();
             this->delSource( req.id ); // delete a SpatialAudioSource object if there is an one with the same id
@@ -206,11 +206,13 @@ bool SpatialAudioServer::handlerPlayService(
 
             res.is_success = ret;
 
+            ROS_INFO("ADD request finished");
+
             break;
 
         case spatial_audio_msgs::PlaySpatialAudio::Request::UPDATE:
 
-            ROS_INFO("ADD action recieved");
+            ROS_INFO("ADD request recieved");
 
             this->mtx_audio_source_.lock();
             this->updateSource( req.id, req );
@@ -219,11 +221,13 @@ bool SpatialAudioServer::handlerPlayService(
             ret = true;
             res.is_success = ret;
 
+            ROS_INFO("ADD request finished");
+
             break;
 
         case spatial_audio_msgs::PlaySpatialAudio::Request::DELETE:
 
-            ROS_INFO("DELETE action recieved");
+            ROS_INFO("DELETE request recieved");
 
             this->mtx_audio_source_.lock();
             this->delSource( req.id );
@@ -232,11 +236,13 @@ bool SpatialAudioServer::handlerPlayService(
             ret = true;
             res.is_success = true;
 
+            ROS_INFO("DELETE request finished");
+
             break;
 
         case spatial_audio_msgs::PlaySpatialAudio::Request::DELETEALL:
 
-            ROS_INFO("DELETEALL action recieved");
+            ROS_INFO("DELETEALL request recieved");
 
             this->mtx_audio_source_.lock();
             while ( not this->list_audio_source_.empty() ) {
@@ -247,11 +253,13 @@ bool SpatialAudioServer::handlerPlayService(
             ret = true;
             res.is_success = true;
 
+            ROS_INFO("DELETEALL request finished");
+
             break;
 
         case spatial_audio_msgs::PlaySpatialAudio::Request::STOP:
 
-            ROS_INFO("Stop requet recieved");
+            ROS_INFO("STOP requet recieved");
 
             this->mtx_audio_source_.lock();
             {
@@ -263,11 +271,13 @@ bool SpatialAudioServer::handlerPlayService(
             ret = true;
             res.is_success = true;
 
+            ROS_INFO("STOP requet finished");
+
             break;
 
         case spatial_audio_msgs::PlaySpatialAudio::Request::PLAY:
 
-            ROS_INFO("Play requet recieved");
+            ROS_INFO("PLAY requet recieved");
 
             this->mtx_audio_source_.lock();
             {
@@ -279,11 +289,13 @@ bool SpatialAudioServer::handlerPlayService(
             ret = true;
             res.is_success = true;
 
+            ROS_INFO("PLAY requet finished");
+
             break;
 
         default:
 
-            ROS_ERROR("Unknown action recieved.");
+            ROS_ERROR("Unknown request recieved.");
 
             ret = false;
             res.is_success = false;
