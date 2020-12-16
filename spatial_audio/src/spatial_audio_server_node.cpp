@@ -21,5 +21,5 @@ int main( int argc, char** argv )
 
     //
     spatial_audio::SpatialAudioServer server( nh, nh_private, tf_buffer );
-    server.spin( 10 );
+    server.spin( 50 );
 }
