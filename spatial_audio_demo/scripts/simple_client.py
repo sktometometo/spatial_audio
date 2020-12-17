@@ -7,7 +7,7 @@ from spatial_audio_msgs.srv import PlaySpatialAudio, PlaySpatialAudioRequest
 def main():
     rospy.init_node( 'simple_client' )
     # parameters
-    source_id = rospy.get_param( '~id', 'source_id' )
+    source_id = int(rospy.get_param( '~id', 0 ))
     source_frame_id  = rospy.get_param( '~frame_id', 'source_sinwave' )
     source_topicname_audio = rospy.get_param( '~source_topicname_audio' )
     source_topicname_info = rospy.get_param( '~source_topicname_info' )
@@ -21,13 +21,19 @@ def main():
     req.stream_topic_audio = source_topicname_audio
     req.stream_topic_info = source_topicname_info
     req.auto_play = True
+    print(req)
     # service call
-    rospy.wait_for_service( source_service_name );
+    try:
+        rospy.wait_for_service( source_service_name, timeout=1.0 )
+    except rospy.ROSException as e:
+        rospy.logerr('service is not found')
+        return False
+
     try:
         service = rospy.ServiceProxy( source_service_name, PlaySpatialAudio )
         res = service( req )
         return res.is_success
-    except rospy.ServiceException, e:
+    except rospy.ServiceException as e:
         rospy.logerr( 'Service call failed: {}'.format(e) )
         return False
 

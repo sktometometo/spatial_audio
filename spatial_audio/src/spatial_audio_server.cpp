@@ -202,6 +202,9 @@ bool SpatialAudioServer::handlerPlayService(
             this->mtx_audio_source_.lock();
             this->delSource( req.id ); // delete a SpatialAudioSource object if there is an one with the same id
             ret = this->addSource( req ); // add an audio source
+            if ( not ret ) {
+                this->delSource( req.id );
+            }
             this->mtx_audio_source_.unlock();
 
             res.is_success = ret;
@@ -316,7 +319,6 @@ bool SpatialAudioServer::delSource( int id )
 {
     auto itr = this->findSource( id );
     if ( itr != this->list_audio_source_.end() ) {
-        itr->close();
         this->list_audio_source_.erase( itr );
         return true;
     } else {

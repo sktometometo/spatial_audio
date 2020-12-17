@@ -160,7 +160,9 @@ void SpatialAudioSource::close()
 {
     this->mtx_.lock();
         this->stream_subscriber_.shutdown();
-        alSourceStop( this->al_source_id_ );
+        if ( this->getSourceState() != AL_PLAYING ) {
+            alSourceStop( this->al_source_id_ );
+        }
     this->mtx_.unlock();
     // release buffer object
     this->dequeALBuffers();
