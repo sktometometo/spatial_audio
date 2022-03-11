@@ -10,12 +10,13 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 // ROS
+#include <ros/ros.h>
+#include <tf2_ros/transform_listener.h>
+// ROS Messages
 #include <audio_stream_msgs/AudioData.h>
 #include <audio_stream_msgs/AudioInfo.h>
 #include <geometry_msgs/Pose.h>
-#include <ros/ros.h>
-#include <spatial_audio_msgs/PlaySpatialAudio.h>
-#include <tf2_ros/transform_listener.h>
+#include <spatial_audio_msgs/AudioSource.h>
 
 namespace spatial_audio
 {
@@ -90,6 +91,11 @@ public:
    * Get Audio Source ID
    */
   int getAudioSourceID();
+  /**
+   * @brief Generate spatial_audio_msgs/AudioSource instance
+   *
+   */
+  spatial_audio_msgs::AudioSource convertToROSMsg();
 
 private:
   /**
