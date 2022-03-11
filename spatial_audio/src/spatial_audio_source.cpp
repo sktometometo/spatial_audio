@@ -22,45 +22,45 @@ namespace spatial_audio
 {
 SpatialAudioSource::SpatialAudioSource()
 {
-  this->is_init_ = false;
-  this->is_playing_ = false;
+  this->initialized_ = false;
+  this->playing_ = false;
 }
 
-SpatialAudioSource::SpatialAudioSource(ros::NodeHandle& nh, int id, std::string reference_frame_id,
+SpatialAudioSource::SpatialAudioSource(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id,
                                        geometry_msgs::Pose source_pose, std::string stream_topic_info,
                                        std::string stream_topic_audio, bool auto_play, int initial_buffer_num,
                                        double timeout)
 {
-  this->is_init_ = false;
-  this->is_playing_ = false;
-  if (not this->init(nh, id, reference_frame_id, source_pose, stream_topic_info, stream_topic_audio, auto_play,
-                     initial_buffer_num, timeout))
+  this->initialized_ = false;
+  this->playing_ = false;
+  if (not this->init(nh, audio_source_id, source_frame_id, source_pose, stream_topic_info, stream_topic_audio,
+                     auto_play, initial_buffer_num, timeout))
   {
-    this->is_init_ = false;
+    this->initialized_ = false;
   }
   else
   {
-    this->is_init_ = true;
+    this->initialized_ = true;
   }
 }
 
 SpatialAudioSource::~SpatialAudioSource()
 {
   // stop playing
-  if (this->is_init_)
+  if (this->initialized_)
   {
     this->close();
   }
 }
 
-bool SpatialAudioSource::init(ros::NodeHandle& nh, int id, std::string reference_frame_id,
+bool SpatialAudioSource::init(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id,
                               geometry_msgs::Pose source_pose, std::string stream_topic_info,
                               std::string stream_topic_audio, bool auto_play, int initial_buffer_num, double timeout)
 {
   bool ret = true;
 
   // すでに initializa 済みであればエラーを返す
-  if (this->is_init_)
+  if (this->initialized_)
   {
     return false;
   }
@@ -69,9 +69,11 @@ bool SpatialAudioSource::init(ros::NodeHandle& nh, int id, std::string reference
   /**
    * initialization of members
    */
-  this->id_ = id;
-  this->source_frame_id_ = reference_frame_id;
+  this->audio_source_id_ = audio_source_id;
+  this->source_frame_id_ = source_frame_id;
   this->source_pose_ = source_pose;
+  this->stream_topic_audio_ = stream_topic_audio;
+  this->stream_topic_info_ = stream_topic_info;
   /**
    * Get a audio info message for meta information of audio stream
    */
@@ -131,7 +133,7 @@ bool SpatialAudioSource::init(ros::NodeHandle& nh, int id, std::string reference
     /**
      * Start Buffering
      */
-    this->is_playing_ = true;
+    this->playing_ = true;
     /**
      * Wait until buffering
      */
@@ -141,7 +143,7 @@ bool SpatialAudioSource::init(ros::NodeHandle& nh, int id, std::string reference
       ros::Duration(1.0).sleep();
       alGetSourcei(this->al_source_id_, AL_BUFFERS_QUEUED, &n);
       ROS_INFO("waiting for buffering until %d buffers for id: %d with topic: %s, current buffers: %d...",
-               initial_buffer_num, this->id_, stream_topic_audio.c_str(), n);
+               initial_buffer_num, this->audio_source_id_, stream_topic_audio.c_str(), n);
     }
     // start actual playing
     alSourcePlay(this->al_source_id_);
@@ -149,14 +151,14 @@ bool SpatialAudioSource::init(ros::NodeHandle& nh, int id, std::string reference
   /**
    * Debug print
    */
-  ROS_INFO("Add an audio source object. id: %d, frame_id: %s, stream topic: %s", this->id_,
+  ROS_INFO("Add an audio source object. id: %d, frame_id: %s, stream topic: %s", this->audio_source_id_,
            this->source_frame_id_.c_str(), stream_topic_audio.c_str());
   /**
    * return
    */
   if (ret == true)
   {
-    this->is_init_ = true;
+    this->initialized_ = true;
   }
   return ret;
 }
@@ -174,20 +176,20 @@ void SpatialAudioSource::close()
   this->dequeALBuffers();
   // release source obect
   alDeleteSources(1, &this->al_source_id_);
-  this->is_init_ = false;
+  this->initialized_ = false;
 }
 
 void SpatialAudioSource::verbose()
 {
-  ROS_INFO_STREAM("audio source id:" << this->id_ << " is_init:" << this->is_init_
-                                     << " is_playing:" << this->is_playing_);
+  ROS_INFO_STREAM("audio source id:" << this->audio_source_id_ << " initialized:" << this->initialized_
+                                     << " playing:" << this->playing_);
 }
 
-void SpatialAudioSource::update(std::string& reference_frame_id, geometry_msgs::Pose& source_pose,
+void SpatialAudioSource::update(std::string& source_frame_id, geometry_msgs::Pose& source_pose,
                                 std::string& stream_topic_info, std::string& stream_topic_audio)
 {
   this->mtx_.lock();
-  this->source_frame_id_ = reference_frame_id;
+  this->source_frame_id_ = source_frame_id;
   this->source_pose_ = source_pose;
   // TODO: update process for ros topic
   this->mtx_.unlock();
@@ -242,7 +244,7 @@ void SpatialAudioSource::dequeALBuffers()
   alGetSourcei(this->al_source_id_, AL_BUFFERS_QUEUED, &m);
   this->mtx_.unlock();
 
-  ROS_INFO("id:%d, %d buffers processed, %d buffers remains.", this->id_, n, m);
+  ROS_INFO("id:%d, %d buffers processed, %d buffers remains.", this->audio_source_id_, n, m);
 }
 
 ALint SpatialAudioSource::getSourceState()
@@ -254,13 +256,13 @@ ALint SpatialAudioSource::getSourceState()
 
 bool SpatialAudioSource::isPlaying()
 {
-  return is_playing_;
+  return playing_;
 }
 
 void SpatialAudioSource::startSourcePlay()
 {
   this->mtx_.lock();
-  this->is_playing_ = true;
+  this->playing_ = true;
   alSourcePlay(this->al_source_id_);
   this->mtx_.unlock();
 }
@@ -269,13 +271,13 @@ void SpatialAudioSource::stopSourcePlay()
 {
   this->mtx_.lock();
   alSourceStop(this->al_source_id_);
-  this->is_playing_ = false;
+  this->playing_ = false;
   this->mtx_.unlock();
 }
 
 int SpatialAudioSource::getAudioSourceID()
 {
-  return this->id_;
+  return this->audio_source_id_;
 }
 
 void SpatialAudioSource::callbackAudioStream(const boost::shared_ptr<audio_stream_msgs::AudioData const>& ptr_msg)
@@ -283,7 +285,7 @@ void SpatialAudioSource::callbackAudioStream(const boost::shared_ptr<audio_strea
   this->dequeALBuffers();
 
   // enqueue a new buffer with recieved data
-  if (this->is_playing_)
+  if (this->playing_)
   {
     ALuint buffer_id;
     ALsizei buffer_size = ptr_msg->data.size();
@@ -296,7 +298,7 @@ void SpatialAudioSource::callbackAudioStream(const boost::shared_ptr<audio_strea
     ROS_INFO("New data containes %d bytes.", buffer_size);
   }
 
-  if (this->is_playing_ and this->is_init_ and this->getSourceState() != AL_PLAYING)
+  if (this->playing_ and this->initialized_ and this->getSourceState() != AL_PLAYING)
   {
     alSourcePlay(this->al_source_id_);
   }
@@ -305,11 +307,11 @@ void SpatialAudioSource::callbackAudioStream(const boost::shared_ptr<audio_strea
 spatial_audio_msgs::AudioSource SpatialAudioSource::convertToROSMsg()
 {
   spatial_audio_msgs::AudioSource msg;
-  msg.header.stamp = ros::Time::now();
-  msg.header.frame_id = this->source_frame_id_;
-  msg.audio_source_id = this->id_;
-  msg.pose = this->source_pose_;
-  msg.stream_topic_audio = this->stream_subscriber_.getTopic();
+  msg.source_frame_id = this->source_frame_id_;
+  msg.audio_source_id = this->audio_source_id_;
+  msg.source_pose = this->source_pose_;
+  msg.stream_topic_audio = stream_topic_audio_;
+  msg.stream_topic_info = stream_topic_info_;
   return msg;
 }
 
