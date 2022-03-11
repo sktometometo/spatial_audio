@@ -16,7 +16,10 @@ add_message_files(
 
 add_service_files(
   FILES
-  PlaySpatialAudio.srv
+  AddSpatialAudio.srv
+  RemoveSpatialAudio.srv
+  UpdateSpatialAudio.srv
+  TriggerSpatialAudio.srv
 )
 
 generate_messages(
