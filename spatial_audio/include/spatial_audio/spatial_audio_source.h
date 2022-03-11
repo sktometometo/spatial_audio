@@ -24,9 +24,9 @@ class SpatialAudioSource
 {
 public:
   SpatialAudioSource();
-  SpatialAudioSource(ros::NodeHandle& nh, int id, std::string reference_frame_id, geometry_msgs::Pose source_pose,
-                     std::string stream_topic_info, std::string stream_topic_audio, bool auto_play = true,
-                     int initial_buffer_num = 1, double timeout = 1.0);
+  SpatialAudioSource(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id,
+                     geometry_msgs::Pose source_pose, std::string stream_topic_info, std::string stream_topic_audio,
+                     bool auto_play = true, int initial_buffer_num = 1, double timeout = 1.0);
   ~SpatialAudioSource();
   /**
    * non copyable settings due to mutex
@@ -44,7 +44,7 @@ public:
    * @param[in] req a request of an audio source to add
    * @param[in] auto_play flag whether to start to play the source automtically
    */
-  bool init(ros::NodeHandle& nh, int id, std::string reference_frame_id, geometry_msgs::Pose source_pose,
+  bool init(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id, geometry_msgs::Pose source_pose,
             std::string stream_topic_info, std::string stream_topic_audio, bool auto_play = true,
             int initial_buffer_num = 1, double timeout = 1.0);
   /**
@@ -58,7 +58,7 @@ public:
   /**
    * update parameters of and audio source
    */
-  void update(std::string& reference_frame_id, geometry_msgs::Pose& source_pose, std::string& stream_topic_info,
+  void update(std::string& source_frame_id, geometry_msgs::Pose& source_pose, std::string& stream_topic_info,
               std::string& stream_topic_audio);
   /**
    * update the pose of an audio source
@@ -103,10 +103,10 @@ private:
    */
   void callbackAudioStream(const boost::shared_ptr<audio_stream_msgs::AudioData const>& ptr_msg);
 
-  int id_;           // audio source id
-  std::mutex mtx_;   // mutex for controling access to the resource
-  bool is_init_;     // flag if Initialzation is done
-  bool is_playing_;  // flag if the source is playing
+  int audio_source_id_;  // audio source id
+  std::mutex mtx_;       // mutex for controling access to the resource
+  bool initialized_;     // flag if Initialzation is done
+  bool playing_;         // flag if the source is playing
   /*
    * ROS related variables
    */
@@ -119,6 +119,8 @@ private:
   /**
    * Audio stream related variables
    */
+  std::string stream_topic_audio_;
+  std::string stream_topic_info_;
   ros::Subscriber stream_subscriber_;
   ALsizei stream_sampling_rate_;
   ALenum stream_format_;
