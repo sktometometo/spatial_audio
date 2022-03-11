@@ -6,13 +6,14 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 // ROS
+#include <ros/ros.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_ros/transform_listener.h>
+// ROS Messages
 #include <audio_stream_msgs/AudioData.h>
 #include <audio_stream_msgs/AudioInfo.h>
 #include <geometry_msgs/Pose.h>
-#include <ros/ros.h>
-#include <spatial_audio_msgs/PlaySpatialAudio.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
-#include <tf2_ros/transform_listener.h>
+#include <spatial_audio_msgs/AudioSource.h>
 // User
 #include <spatial_audio/spatial_audio_source.h>
 #include <spatial_audio/util.h>
@@ -299,6 +300,17 @@ void SpatialAudioSource::callbackAudioStream(const boost::shared_ptr<audio_strea
   {
     alSourcePlay(this->al_source_id_);
   }
+}
+
+spatial_audio_msgs::AudioSource SpatialAudioSource::convertToROSMsg()
+{
+  spatial_audio_msgs::AudioSource msg;
+  msg.header.stamp = ros::Time::now();
+  msg.header.frame_id = this->source_frame_id_;
+  msg.audio_source_id = this->id_;
+  msg.pose = this->source_pose_;
+  msg.stream_topic_audio = this->stream_subscriber_.getTopic();
+  return msg;
 }
 
 }  // namespace spatial_audio
