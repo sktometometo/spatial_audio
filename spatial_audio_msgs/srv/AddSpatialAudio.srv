@@ -1,0 +1,15 @@
+#
+uint8 ADD=1
+uint8 UPDATE=2
+uint8 DELETE=3
+uint8 DELETEALL=4
+uint8 STOP=5
+uint8 PLAY=6
+
+spatial_audio_msgs/AudioSource audio_source
+bool auto_play
+
+---
+bool success
+int32 audio_source_id
+string message
