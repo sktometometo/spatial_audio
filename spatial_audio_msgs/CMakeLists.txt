@@ -17,7 +17,6 @@ add_message_files(
 add_service_files(
   FILES
   AddSpatialAudio.srv
-  RemoveSpatialAudio.srv
   UpdateSpatialAudio.srv
   TriggerSpatialAudio.srv
 )
