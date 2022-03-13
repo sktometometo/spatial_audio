@@ -1,5 +1,0 @@
-int32 audio_source_id
-
----
-bool success
-string message
