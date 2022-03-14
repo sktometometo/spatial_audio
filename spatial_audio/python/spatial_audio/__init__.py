@@ -18,23 +18,38 @@ class SpatialAudioClient(object):
     def __init__(self):
 
         self._client_add_audio_source = rospy.ServiceProxy(
-            '~add_audio_source', AddSpatialAudio)
+            '/spatial_audio_server_node/add_audio_source', AddSpatialAudio)
         self._client_update_audio_source = rospy.ServiceProxy(
-            '~update_audio_source', UpdateSpatialAudio)
+            '/spatial_audio_server_node/update_audio_source', UpdateSpatialAudio)
         self._client_remove_audio_source = rospy.ServiceProxy(
-            '~remove_audio_source', TriggerSpatialAudio)
+            '/spatial_audio_server_node/remove_audio_source', TriggerSpatialAudio)
         self._client_remove_all_audio_source = rospy.ServiceProxy(
-            '~remove_all_audio_source', Trigger)
+            '/spatial_audio_server_node/remove_all_audio_source', Trigger)
         self._client_play_audio_source = rospy.ServiceProxy(
-            '~play_audio_source', TriggerSpatialAudio)
+            '/spatial_audio_server_node/play_audio_source', TriggerSpatialAudio)
         self._client_stop_audio_source = rospy.ServiceProxy(
-            '~stop_audio_source', TriggerSpatialAudio)
+            '/spatial_audio_server_node/stop_audio_source', TriggerSpatialAudio)
+
+    def wait_for_server(self, timeout=rospy.Duration(10)):
+
+        rospy.wait_for_service(
+            '/spatial_audio_server_node/add_audio_source', timeout)
+        rospy.wait_for_service(
+            '/spatial_audio_server_node/update_audio_source', timeout)
+        rospy.wait_for_service(
+            '/spatial_audio_server_node/remove_audio_source', timeout)
+        rospy.wait_for_service(
+            '/spatial_audio_server_node/remove_all_audio_source', timeout)
+        rospy.wait_for_service(
+            '/spatial_audio_server_node/play_audio_source', timeout)
+        rospy.wait_for_service(
+            '/spatial_audio_server_node/stop_audio_source', timeout)
 
     def get_audio_source_array(self, timeout=rospy.Duration(1.0)):
 
         try:
             msg = rospy.wait_for_message(
-                '~audio_source_array', AudioSourceArray, timeout=timeout)
+                '/spatial_audio_server_node/audio_source_array', AudioSourceArray, timeout=timeout)
             return msg
         except:
             return None
