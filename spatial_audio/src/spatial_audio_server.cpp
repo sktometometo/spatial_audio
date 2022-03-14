@@ -237,7 +237,7 @@ bool SpatialAudioServer::handlerAddService(spatial_audio_msgs::AddSpatialAudio::
   std::lock_guard<std::mutex> lock(this->mtx_audio_source_);
   int audio_source_id = this->getNewSourceID();
   auto result = this->addAudioSource(audio_source_id, req.audio_source.source_frame_id, req.audio_source.source_pose,
-                                     req.audio_source.stream_topic_info, req.audio_source.stream_topic_audio);
+                                     req.audio_source.stream_topic_audio, req.audio_source.stream_topic_info);
   if (not result)
   {
     this->removeAudioSource(audio_source_id);
@@ -262,7 +262,7 @@ bool SpatialAudioServer::handlerUpdateService(spatial_audio_msgs::UpdateSpatialA
   std::lock_guard<std::mutex> lock(this->mtx_audio_source_);
   auto result =
       this->updateAudioSource(req.audio_source_id, req.audio_source.source_frame_id, req.audio_source.source_pose,
-                              req.audio_source.stream_topic_info, req.audio_source.stream_topic_audio);
+                              req.audio_source.stream_topic_audio, req.audio_source.stream_topic_info);
   if (result)
   {
     res.success = true;
@@ -357,11 +357,11 @@ bool SpatialAudioServer::handlerStopService(spatial_audio_msgs::TriggerSpatialAu
 
 std::optional<std::list<SpatialAudioSource>::iterator>
 SpatialAudioServer::addAudioSource(int audio_source_id, std::string source_frame_id, geometry_msgs::Pose source_pose,
-                                   std::string stream_topic_info, std::string stream_topic_audio)
+                                   std::string stream_topic_audio, std::string stream_topic_info)
 {
   auto itr = this->list_audio_source_.emplace(this->list_audio_source_.begin());
   bool success =
-      itr->init(this->nh_, audio_source_id, source_frame_id, source_pose, stream_topic_info, stream_topic_audio);
+      itr->init(this->nh_, audio_source_id, source_frame_id, source_pose, stream_topic_audio, stream_topic_info);
   if (success)
   {
     return itr;
@@ -374,13 +374,13 @@ SpatialAudioServer::addAudioSource(int audio_source_id, std::string source_frame
 
 std::optional<std::list<SpatialAudioSource>::iterator>
 SpatialAudioServer::updateAudioSource(int audio_source_id, std::string source_frame_id, geometry_msgs::Pose source_pose,
-                                      std::string stream_topic_info, std::string stream_topic_audio)
+                                      std::string stream_topic_audio, std::string stream_topic_info)
 {
   auto result = this->findAudioSource(audio_source_id);
   if (result)
   {
     auto itr = result.value();
-    itr->update(source_frame_id, source_pose, stream_topic_info, stream_topic_audio);
+    itr->update(source_frame_id, source_pose, stream_topic_audio, stream_topic_info);
     return itr;
   }
   else

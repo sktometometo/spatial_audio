@@ -27,12 +27,12 @@ SpatialAudioSource::SpatialAudioSource()
 }
 
 SpatialAudioSource::SpatialAudioSource(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id,
-                                       geometry_msgs::Pose source_pose, std::string stream_topic_info,
-                                       std::string stream_topic_audio, double timeout)
+                                       geometry_msgs::Pose source_pose, std::string stream_topic_audio,
+                                       std::string stream_topic_info, double timeout)
 {
   this->initialized_ = false;
   this->playing_ = false;
-  if (not this->init(nh, audio_source_id, source_frame_id, source_pose, stream_topic_info, stream_topic_audio, timeout))
+  if (not this->init(nh, audio_source_id, source_frame_id, source_pose, stream_topic_audio, stream_topic_info, timeout))
   {
     this->initialized_ = false;
   }
@@ -52,8 +52,8 @@ SpatialAudioSource::~SpatialAudioSource()
 }
 
 bool SpatialAudioSource::init(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id,
-                              geometry_msgs::Pose source_pose, std::string stream_topic_info,
-                              std::string stream_topic_audio, double timeout)
+                              geometry_msgs::Pose source_pose, std::string stream_topic_audio,
+                              std::string stream_topic_info, double timeout)
 {
   bool ret = true;
 
@@ -160,7 +160,7 @@ void SpatialAudioSource::verbose()
 }
 
 void SpatialAudioSource::update(std::string& source_frame_id, geometry_msgs::Pose& source_pose,
-                                std::string& stream_topic_info, std::string& stream_topic_audio)
+                                std::string& stream_topic_audio, std::string& stream_topic_info)
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   this->source_frame_id_ = source_frame_id;

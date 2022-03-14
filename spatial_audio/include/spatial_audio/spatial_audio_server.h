@@ -75,16 +75,16 @@ private:
   std::optional<std::list<SpatialAudioSource>::iterator> addAudioSource(int audio_source_id,
                                                                         std::string source_frame_id,
                                                                         geometry_msgs::Pose source_pose,
-                                                                        std::string stream_topic_info,
-                                                                        std::string stream_topic_audio);
+                                                                        std::string stream_topic_audio,
+                                                                        std::string stream_topic_info);
   /**
    * update an audio source
    */
   std::optional<std::list<SpatialAudioSource>::iterator> updateAudioSource(int audio_source_id,
                                                                            std::string source_frame_id,
                                                                            geometry_msgs::Pose source_pose,
-                                                                           std::string stream_topic_info,
-                                                                           std::string stream_topic_audio);
+                                                                           std::string stream_topic_audio,
+                                                                           std::string stream_topic_info);
   /**
    * delete an audio source
    * @param[in] id id number of an audio source to delete
