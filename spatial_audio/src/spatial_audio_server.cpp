@@ -45,26 +45,26 @@ SpatialAudioServer::SpatialAudioServer(ros::NodeHandle& nh, ros::NodeHandle& nh_
   // Service
   this->srv_add_ = this->nh_private_.advertiseService<SpatialAudioServer, spatial_audio_msgs::AddSpatialAudio::Request,
                                                       spatial_audio_msgs::AddSpatialAudio::Response>(
-      std::string("add_source"), &SpatialAudioServer::handlerAddService, this);
+      std::string("add_audio_source"), &SpatialAudioServer::handlerAddService, this);
   this->srv_update_ =
       this->nh_private_.advertiseService<SpatialAudioServer, spatial_audio_msgs::UpdateSpatialAudio::Request,
                                          spatial_audio_msgs::UpdateSpatialAudio::Response>(
-          std::string("update_source"), &SpatialAudioServer::handlerUpdateService, this);
+          std::string("update_audio_source"), &SpatialAudioServer::handlerUpdateService, this);
   this->srv_remove_ =
       this->nh_private_.advertiseService<SpatialAudioServer, spatial_audio_msgs::TriggerSpatialAudio::Request,
                                          spatial_audio_msgs::TriggerSpatialAudio::Response>(
-          std::string("remove_source"), &SpatialAudioServer::handlerRemoveService, this);
+          std::string("remove_audio_source"), &SpatialAudioServer::handlerRemoveService, this);
   this->srv_remove_all_ =
       this->nh_private_.advertiseService<SpatialAudioServer, std_srvs::Trigger::Request, std_srvs::Trigger::Response>(
-          std::string("remove_all_source"), &SpatialAudioServer::handlerRemoveAllService, this);
+          std::string("remove_all_audio_source"), &SpatialAudioServer::handlerRemoveAllService, this);
   this->srv_play_ =
       this->nh_private_.advertiseService<SpatialAudioServer, spatial_audio_msgs::TriggerSpatialAudio::Request,
                                          spatial_audio_msgs::TriggerSpatialAudio::Response>(
-          std::string("play_source"), &SpatialAudioServer::handlerPlayService, this);
+          std::string("play_audio_source"), &SpatialAudioServer::handlerPlayService, this);
   this->srv_stop_ =
       this->nh_private_.advertiseService<SpatialAudioServer, spatial_audio_msgs::TriggerSpatialAudio::Request,
                                          spatial_audio_msgs::TriggerSpatialAudio::Response>(
-          std::string("stop_source"), &SpatialAudioServer::handlerStopService, this);
+          std::string("stop_audio_source"), &SpatialAudioServer::handlerStopService, this);
 
   // Publisher
   this->pub_audio_source_array_ =
@@ -424,7 +424,15 @@ int SpatialAudioServer::getNewSourceID()
 {
   auto itr_max_id = std::max_element(this->list_audio_source_.begin(), this->list_audio_source_.end(),
                                      [](auto& a, auto& b) { return a.getAudioSourceID() < b.getAudioSourceID(); });
-  int audio_source_id = itr_max_id->getAudioSourceID() + 1;
+  int audio_source_id;
+  if (itr_max_id == this->list_audio_source_.end())
+  {
+    audio_source_id = 1;
+  }
+  else
+  {
+    audio_source_id = itr_max_id->getAudioSourceID() + 1;
+  }
   return audio_source_id;
 }
 
