@@ -26,7 +26,7 @@ public:
   SpatialAudioSource();
   SpatialAudioSource(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id,
                      geometry_msgs::Pose source_pose, std::string stream_topic_info, std::string stream_topic_audio,
-                     bool auto_play = true, int initial_buffer_num = 1, double timeout = 1.0);
+                     double timeout = 1.0);
   ~SpatialAudioSource();
   /**
    * non copyable settings due to mutex
@@ -42,11 +42,9 @@ public:
    * Initialzation function. This function must be called before an object is actually used.
    * @param[in] nh ros node handler
    * @param[in] req a request of an audio source to add
-   * @param[in] auto_play flag whether to start to play the source automtically
    */
   bool init(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id, geometry_msgs::Pose source_pose,
-            std::string stream_topic_info, std::string stream_topic_audio, bool auto_play = true,
-            int initial_buffer_num = 1, double timeout = 1.0);
+            std::string stream_topic_info, std::string stream_topic_audio, double timeout = 1.0);
   /**
    * Finalization function. This function should be called when an audio source is discarded.
    */
@@ -80,9 +78,13 @@ public:
    */
   bool isPlaying();
   /**
+   * @brief Wait for buffering.
+   */
+  void waitBuffering(int buffer_num = 1);
+  /**
    * Start playing the source
    */
-  void startSourcePlay();
+  void startSourcePlay(bool buffering = true, int buffer_num = 1);
   /**
    * Stop playing the source
    */
@@ -105,7 +107,7 @@ private:
 
   int audio_source_id_;  // audio source id
   std::mutex mtx_;       // mutex for controling access to the resource
-  bool initialized_;     // flag if Initialzation is done
+  bool initialized_;     // flag if initialization is done
   bool playing_;         // flag if the source is playing
   /*
    * ROS related variables

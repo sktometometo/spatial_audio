@@ -28,13 +28,11 @@ SpatialAudioSource::SpatialAudioSource()
 
 SpatialAudioSource::SpatialAudioSource(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id,
                                        geometry_msgs::Pose source_pose, std::string stream_topic_info,
-                                       std::string stream_topic_audio, bool auto_play, int initial_buffer_num,
-                                       double timeout)
+                                       std::string stream_topic_audio, double timeout)
 {
   this->initialized_ = false;
   this->playing_ = false;
-  if (not this->init(nh, audio_source_id, source_frame_id, source_pose, stream_topic_info, stream_topic_audio,
-                     auto_play, initial_buffer_num, timeout))
+  if (not this->init(nh, audio_source_id, source_frame_id, source_pose, stream_topic_info, stream_topic_audio, timeout))
   {
     this->initialized_ = false;
   }
@@ -55,7 +53,7 @@ SpatialAudioSource::~SpatialAudioSource()
 
 bool SpatialAudioSource::init(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id,
                               geometry_msgs::Pose source_pose, std::string stream_topic_info,
-                              std::string stream_topic_audio, bool auto_play, int initial_buffer_num, double timeout)
+                              std::string stream_topic_audio, double timeout)
 {
   bool ret = true;
 
@@ -125,29 +123,6 @@ bool SpatialAudioSource::init(ros::NodeHandle& nh, int audio_source_id, std::str
    */
   this->stream_subscriber_ =
       nh.subscribe<audio_stream_msgs::AudioData>(stream_topic_audio, 1, &SpatialAudioSource::callbackAudioStream, this);
-  /**
-   * start playing if auto_play arg is true
-   */
-  if (auto_play)
-  {
-    /**
-     * Start Buffering
-     */
-    this->playing_ = true;
-    /**
-     * Wait until buffering
-     */
-    ALsizei n = 0;
-    while (n < initial_buffer_num)
-    {
-      ros::Duration(1.0).sleep();
-      alGetSourcei(this->al_source_id_, AL_BUFFERS_QUEUED, &n);
-      ROS_INFO("waiting for buffering until %d buffers for id: %d with topic: %s, current buffers: %d...",
-               initial_buffer_num, this->audio_source_id_, stream_topic_audio.c_str(), n);
-    }
-    // start actual playing
-    alSourcePlay(this->al_source_id_);
-  }
   /**
    * Debug print
    */
@@ -259,10 +234,29 @@ bool SpatialAudioSource::isPlaying()
   return playing_;
 }
 
-void SpatialAudioSource::startSourcePlay()
+void SpatialAudioSource::waitBuffering(int buffer_num)
+{
+  /**
+   * Wait until buffering
+   */
+  ALsizei n = 0;
+  while (n < buffer_num)
+  {
+    ros::Duration(1.0).sleep();
+    alGetSourcei(this->al_source_id_, AL_BUFFERS_QUEUED, &n);
+    ROS_DEBUG("waiting for buffering until %d buffers for id: %d with topic: %s, current buffers: %d...", buffer_num,
+              this->audio_source_id_, this->stream_topic_audio_.c_str(), n);
+  }
+}
+
+void SpatialAudioSource::startSourcePlay(bool buffering, int buffer_num)
 {
   this->mtx_.lock();
   this->playing_ = true;
+  if (buffering)
+  {
+    this->waitBuffering(buffer_num);
+  }
   alSourcePlay(this->al_source_id_);
   this->mtx_.unlock();
 }
