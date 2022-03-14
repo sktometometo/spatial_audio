@@ -2,41 +2,26 @@
 # -*- coding:utf-8 -*-
 
 import rospy
-from spatial_audio_msgs.srv import PlaySpatialAudio, PlaySpatialAudioRequest
+from spatial_audio import SpatialAudioClient
+
 
 def main():
-    rospy.init_node( 'simple_client' )
-    # parameters
-    source_id = int(rospy.get_param( '~id', 0 ))
-    source_frame_id  = rospy.get_param( '~frame_id', 'source_sinwave' )
-    source_topicname_audio = rospy.get_param( '~source_topicname_audio' )
-    source_topicname_info = rospy.get_param( '~source_topicname_info' )
-    source_service_name  = '~service'
-    # create a request
-    req = PlaySpatialAudioRequest()
-    req.header.frame_id = source_frame_id
-    req.id = source_id
-    req.action = req.ADD
-    req.pose.orientation.x = 1
-    req.stream_topic_audio = source_topicname_audio
-    req.stream_topic_info = source_topicname_info
-    req.auto_play = True
-    print(req)
-    # service call
-    try:
-        rospy.wait_for_service( source_service_name, timeout=1.0 )
-    except rospy.ROSException as e:
-        rospy.logerr('service is not found')
-        return False
 
-    try:
-        service = rospy.ServiceProxy( source_service_name, PlaySpatialAudio )
-        res = service( req )
-        return res.is_success
-    except rospy.ServiceException as e:
-        rospy.logerr( 'Service call failed: {}'.format(e) )
-        return False
+    rospy.init_node('simple_client')
+
+    source_frame_id = rospy.get_param('~source_frame_id', 'source_sinwave')
+    stream_topic_audio = rospy.get_param('~stream_topic_audio')
+    stream_topic_info = rospy.get_param('~stream_topic_info')
+
+    client = SpatialAudioClient()
+    client.wait_for_server()
+
+    success, message, audio_source_id = client.add_audio_source(
+        source_frame_id, stream_topic_audio=stream_topic_audio, stream_topic_info=stream_topic_info, auto_play=True)
+
+    rospy.loginfo('success: {}, message: {}, audio_source_id: {}'.format(
+        success, message, audio_source_id))
+
 
 if __name__ == '__main__':
     ret = main()
-    rospy.loginfo( 'ret = {}'.format(ret) )
