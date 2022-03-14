@@ -3,6 +3,7 @@
 #include <list>
 #include <mutex>
 #include <vector>
+#include <optional>
 // Boost
 #include <boost/shared_ptr.hpp>
 // ROS
@@ -19,7 +20,6 @@
 #include <spatial_audio_msgs/AudioSource.h>
 #include <spatial_audio_msgs/AudioSourceArray.h>
 #include <spatial_audio_msgs/AddSpatialAudio.h>
-#include <spatial_audio_msgs/RemoveSpatialAudio.h>
 #include <spatial_audio_msgs/UpdateSpatialAudio.h>
 #include <spatial_audio_msgs/TriggerSpatialAudio.h>
 // OpenAL headers
@@ -43,11 +43,32 @@ SpatialAudioServer::SpatialAudioServer(ros::NodeHandle& nh, ros::NodeHandle& nh_
   this->nh_private_.param<std::string>("hrtfname", this->hrtfname_, "");
 
   // Service
-  this->srv_ = this->nh_private_.advertiseService<SpatialAudioServer, spatial_audio_msgs::PlaySpatialAudio::Request,
-                                                  spatial_audio_msgs::PlaySpatialAudio::Response>(
-      std::string("play_source"), &SpatialAudioServer::handlerPlayService, this);
+  this->srv_add_ = this->nh_private_.advertiseService<SpatialAudioServer, spatial_audio_msgs::AddSpatialAudio::Request,
+                                                      spatial_audio_msgs::AddSpatialAudio::Response>(
+      std::string("add_source"), &SpatialAudioServer::handlerAddService, this);
+  this->srv_update_ =
+      this->nh_private_.advertiseService<SpatialAudioServer, spatial_audio_msgs::UpdateSpatialAudio::Request,
+                                         spatial_audio_msgs::UpdateSpatialAudio::Response>(
+          std::string("update_source"), &SpatialAudioServer::handlerUpdateService, this);
+  this->srv_remove_ =
+      this->nh_private_.advertiseService<SpatialAudioServer, spatial_audio_msgs::TriggerSpatialAudio::Request,
+                                         spatial_audio_msgs::TriggerSpatialAudio::Response>(
+          std::string("remove_source"), &SpatialAudioServer::handlerRemoveService, this);
+  this->srv_remove_all_ =
+      this->nh_private_.advertiseService<SpatialAudioServer, std_srvs::Trigger::Request, std_srvs::Trigger::Response>(
+          std::string("remove_all_source"), &SpatialAudioServer::handlerRemoveAllService, this);
+  this->srv_play_ =
+      this->nh_private_.advertiseService<SpatialAudioServer, spatial_audio_msgs::TriggerSpatialAudio::Request,
+                                         spatial_audio_msgs::TriggerSpatialAudio::Response>(
+          std::string("play_source"), &SpatialAudioServer::handlerPlayService, this);
+  this->srv_stop_ =
+      this->nh_private_.advertiseService<SpatialAudioServer, spatial_audio_msgs::TriggerSpatialAudio::Request,
+                                         spatial_audio_msgs::TriggerSpatialAudio::Response>(
+          std::string("stop_source"), &SpatialAudioServer::handlerStopService, this);
 
   // Publisher
+  this->pub_audio_source_array_ =
+      this->nh_private_.advertise<spatial_audio_msgs::AudioSourceArray>(std::string("audio_source_array"), 1);
 
   // OpenAL
   // Opening an device
@@ -101,7 +122,7 @@ SpatialAudioServer::~SpatialAudioServer()
   /* delete all the audio source objects */
   while (not this->list_audio_source_.empty())
   {
-    this->delSource(this->list_audio_source_.front().getAudioSourceID());
+    this->removeAudioSource(this->list_audio_source_.front().getAudioSourceID());
   }
   /* cleaning up OpenAL */
   alcMakeContextCurrent(NULL);
@@ -210,140 +231,171 @@ void SpatialAudioServer::spin(int spin_rate)
   }
 }
 
-bool SpatialAudioServer::handlerPlayService(spatial_audio_msgs::PlaySpatialAudio::Request& req,
-                                            spatial_audio_msgs::PlaySpatialAudio::Response& res)
+bool SpatialAudioServer::handlerAddService(spatial_audio_msgs::AddSpatialAudio::Request& req,
+                                           spatial_audio_msgs::AddSpatialAudio::Response& res)
 {
-  bool ret;
-  switch (req.action)
+  std::lock_guard<std::mutex> lock(this->mtx_audio_source_);
+  int audio_source_id = this->getNewSourceID();
+  auto result = this->addAudioSource(audio_source_id, req.audio_source.source_frame_id, req.audio_source.source_pose,
+                                     req.audio_source.stream_topic_info, req.audio_source.stream_topic_audio);
+  if (not result)
   {
-    case spatial_audio_msgs::PlaySpatialAudio::Request::ADD:
-
-      ROS_INFO("ADD request recieved");
-
-      this->mtx_audio_source_.lock();
-      this->delSource(req.id);     // delete a SpatialAudioSource object if there is an one with the same id
-      ret = this->addSource(req);  // add an audio source
-      if (not ret)
-      {
-        this->delSource(req.id);
-      }
-      this->mtx_audio_source_.unlock();
-
-      res.is_success = ret;
-
-      ROS_INFO("ADD request finished");
-
-      break;
-
-    case spatial_audio_msgs::PlaySpatialAudio::Request::UPDATE:
-
-      ROS_INFO("ADD request recieved");
-
-      this->mtx_audio_source_.lock();
-      this->updateSource(req.id, req);
-      this->mtx_audio_source_.unlock();
-
-      ret = true;
-      res.is_success = ret;
-
-      ROS_INFO("ADD request finished");
-
-      break;
-
-    case spatial_audio_msgs::PlaySpatialAudio::Request::DELETE:
-
-      ROS_INFO("DELETE request recieved");
-
-      this->mtx_audio_source_.lock();
-      this->delSource(req.id);
-      this->mtx_audio_source_.unlock();
-
-      ret = true;
-      res.is_success = true;
-
-      ROS_INFO("DELETE request finished");
-
-      break;
-
-    case spatial_audio_msgs::PlaySpatialAudio::Request::DELETEALL:
-
-      ROS_INFO("DELETEALL request recieved");
-
-      this->mtx_audio_source_.lock();
-      while (not this->list_audio_source_.empty())
-      {
-        this->delSource(this->list_audio_source_.front().getAudioSourceID());
-      }
-      this->mtx_audio_source_.unlock();
-
-      ret = true;
-      res.is_success = true;
-
-      ROS_INFO("DELETEALL request finished");
-
-      break;
-
-    case spatial_audio_msgs::PlaySpatialAudio::Request::STOP:
-
-      ROS_INFO("STOP requet recieved");
-
-      this->mtx_audio_source_.lock();
-      {
-        auto itr = this->findSource(req.id);
-        itr->stopSourcePlay();
-      }
-      this->mtx_audio_source_.unlock();
-
-      ret = true;
-      res.is_success = true;
-
-      ROS_INFO("STOP requet finished");
-
-      break;
-
-    case spatial_audio_msgs::PlaySpatialAudio::Request::PLAY:
-
-      ROS_INFO("PLAY requet recieved");
-
-      this->mtx_audio_source_.lock();
-      {
-        auto itr = this->findSource(req.id);
-        itr->startSourcePlay();
-      }
-      this->mtx_audio_source_.unlock();
-
-      ret = true;
-      res.is_success = true;
-
-      ROS_INFO("PLAY requet finished");
-
-      break;
-
-    default:
-
-      ROS_ERROR("Unknown request recieved.");
-
-      ret = false;
-      res.is_success = false;
-
-      break;
+    this->removeAudioSource(audio_source_id);
+    res.success = true;
+    res.message = std::string("Failed to add audio source");
+    return false;
   }
-  return ret;
+
+  if (req.auto_play)
+  {
+    auto itr = result.value();
+    itr->startSourcePlay();
+  }
+  res.success = true;
+  res.audio_source_id = audio_source_id;
+  return true;
 }
 
-bool SpatialAudioServer::addAudioSource(spatial_audio_msgs::PlaySpatialAudio::Request& req)
+bool SpatialAudioServer::handlerUpdateService(spatial_audio_msgs::UpdateSpatialAudio::Request& req,
+                                              spatial_audio_msgs::UpdateSpatialAudio::Response& res)
+{
+  std::lock_guard<std::mutex> lock(this->mtx_audio_source_);
+  auto result =
+      this->updateAudioSource(req.audio_source_id, req.audio_source.source_frame_id, req.audio_source.source_pose,
+                              req.audio_source.stream_topic_info, req.audio_source.stream_topic_audio);
+  if (result)
+  {
+    res.success = true;
+  }
+  else
+  {
+    res.success = false;
+    res.message = std::string("Failed to update audio source");
+  }
+  return res.success;
+}
+
+bool SpatialAudioServer::handlerRemoveService(spatial_audio_msgs::TriggerSpatialAudio::Request& req,
+                                              spatial_audio_msgs::TriggerSpatialAudio::Response& res)
+{
+  std::lock_guard<std::mutex> lock(this->mtx_audio_source_);
+  bool success = this->removeAudioSource(req.audio_source_id);
+  if (success)
+  {
+    res.success = success;
+  }
+  else
+  {
+    res.success = success;
+    res.message = std::string("Failed to remove audio source");
+  }
+  return success;
+}
+
+bool SpatialAudioServer::handlerRemoveAllService(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
+{
+  std::lock_guard<std::mutex> lock(this->mtx_audio_source_);
+  bool success = true;
+  bool ret = true;
+  while (ret and (not this->list_audio_source_.empty()))
+  {
+    ret = this->removeAudioSource(this->list_audio_source_.front().getAudioSourceID());
+    success = ret and success;
+  }
+
+  if (success)
+  {
+    res.success = success;
+  }
+  else
+  {
+    res.success = success;
+    res.message = std::string("Failed to remove all audio source");
+  }
+  return success;
+}
+
+bool SpatialAudioServer::handlerPlayService(spatial_audio_msgs::TriggerSpatialAudio::Request& req,
+                                            spatial_audio_msgs::TriggerSpatialAudio::Response& res)
+{
+  std::lock_guard<std::mutex> lock(this->mtx_audio_source_);
+  auto result = this->findAudioSource(req.audio_source_id);
+  if (not result)
+  {
+    res.success = false;
+    res.message = "Failed to find audio source.";
+    return false;
+  }
+  else
+  {
+    auto itr = result.value();
+    itr->startSourcePlay();
+    res.success = true;
+    return true;
+  }
+}
+
+bool SpatialAudioServer::handlerStopService(spatial_audio_msgs::TriggerSpatialAudio::Request& req,
+                                            spatial_audio_msgs::TriggerSpatialAudio::Response& res)
+{
+  std::lock_guard<std::mutex> lock(this->mtx_audio_source_);
+  auto result = this->findAudioSource(req.audio_source_id);
+  if (not result)
+  {
+    res.success = false;
+    res.message = "Failed to find audio source.";
+    return false;
+  }
+  else
+  {
+    auto itr = result.value();
+    itr->stopSourcePlay();
+    res.success = true;
+    return true;
+  }
+}
+
+std::optional<std::list<SpatialAudioSource>::iterator>
+SpatialAudioServer::addAudioSource(int audio_source_id, std::string source_frame_id, geometry_msgs::Pose source_pose,
+                                   std::string stream_topic_info, std::string stream_topic_audio)
 {
   auto itr = this->list_audio_source_.emplace(this->list_audio_source_.begin());
-  bool ret = itr->init(this->nh_, req.id, req.header.frame_id, req.pose, req.stream_topic_info, req.stream_topic_audio,
-                       req.auto_play, 10);
-  return ret;
+  bool success =
+      itr->init(this->nh_, audio_source_id, source_frame_id, source_pose, stream_topic_info, stream_topic_audio);
+  if (success)
+  {
+    return itr;
+  }
+  else
+  {
+    return std::nullopt;
+  }
 }
 
-bool SpatialAudioServer::delSource(int id)
+std::optional<std::list<SpatialAudioSource>::iterator>
+SpatialAudioServer::updateAudioSource(int audio_source_id, std::string source_frame_id, geometry_msgs::Pose source_pose,
+                                      std::string stream_topic_info, std::string stream_topic_audio)
 {
-  auto itr = this->findSource(id);
-  if (itr != this->list_audio_source_.end())
+  auto result = this->findAudioSource(audio_source_id);
+  if (result)
   {
+    auto itr = result.value();
+    itr->update(source_frame_id, source_pose, stream_topic_info, stream_topic_audio);
+    return itr;
+  }
+  else
+  {
+    return std::nullopt;
+  }
+}
+
+bool SpatialAudioServer::removeAudioSource(int audio_source_id)
+{
+  auto result = this->findAudioSource(audio_source_id);
+  if (result)
+  {
+    auto itr = result.value();
+    itr->close();
     this->list_audio_source_.erase(itr);
     return true;
   }
@@ -353,26 +405,27 @@ bool SpatialAudioServer::delSource(int id)
   }
 }
 
-bool SpatialAudioServer::updateSource(int id, spatial_audio_msgs::PlaySpatialAudio::Request& req)
-{
-  auto itr = this->findSource(id);
-  if (itr != this->list_audio_source_.end())
-  {
-    itr->update(req.header.frame_id, req.pose, req.stream_topic_info, req.stream_topic_audio);
-    return true;
-  }
-  else
-  {
-    return false;
-  }
-}
-
-std::list<SpatialAudioSource>::iterator SpatialAudioServer::findSource(int id)
+std::optional<std::list<SpatialAudioSource>::iterator> SpatialAudioServer::findAudioSource(int audio_source_id)
 {
   std::list<SpatialAudioSource>::iterator itr =
       std::find_if(this->list_audio_source_.begin(), this->list_audio_source_.end(),
-                   [&id](SpatialAudioSource& x) { return x.getAudioSourceID() == id; });
-  return itr;
+                   [&audio_source_id](SpatialAudioSource& x) { return x.getAudioSourceID() == audio_source_id; });
+  if (itr == this->list_audio_source_.end())
+  {
+    return std::nullopt;
+  }
+  else
+  {
+    return itr;
+  }
+}
+
+int SpatialAudioServer::getNewSourceID()
+{
+  auto itr_max_id = std::max_element(this->list_audio_source_.begin(), this->list_audio_source_.end(),
+                                     [](auto& a, auto& b) { return a.getAudioSourceID() < b.getAudioSourceID(); });
+  int audio_source_id = itr_max_id->getAudioSourceID() + 1;
+  return audio_source_id;
 }
 
 void SpatialAudioServer::updateCoordinates()

@@ -6,6 +6,7 @@
 #include <list>
 #include <mutex>
 #include <string>
+#include <optional>
 // Boost
 #include <boost/shared_ptr.hpp>
 // OpenAL headers
@@ -61,41 +62,48 @@ private:
 
   bool handlerRemoveAllService(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res);
 
-  bool handlerStopService(spatial_audio_msgs::TriggerSpatialAudio::Request& req,
+  bool handlerPlayService(spatial_audio_msgs::TriggerSpatialAudio::Request& req,
                           spatial_audio_msgs::TriggerSpatialAudio::Response& res);
 
-  bool handlerPlayService(spatial_audio_msgs::TriggerSpatialAudio::Request& req,
+  bool handlerStopService(spatial_audio_msgs::TriggerSpatialAudio::Request& req,
                           spatial_audio_msgs::TriggerSpatialAudio::Response& res);
 
   /**
    * add an audio source
    * @param[in] req a request of an audio source to add
    */
-  bool addAudioSource(int audio_source_id, std::string source_frame_id, geometry_msgs::Pose,
-                      std::string stream_topic_info, std::string stream_topic_audio);
+  std::optional<std::list<SpatialAudioSource>::iterator> addAudioSource(int audio_source_id,
+                                                                        std::string source_frame_id,
+                                                                        geometry_msgs::Pose source_pose,
+                                                                        std::string stream_topic_info,
+                                                                        std::string stream_topic_audio);
+  /**
+   * update an audio source
+   */
+  std::optional<std::list<SpatialAudioSource>::iterator> updateAudioSource(int audio_source_id,
+                                                                           std::string source_frame_id,
+                                                                           geometry_msgs::Pose source_pose,
+                                                                           std::string stream_topic_info,
+                                                                           std::string stream_topic_audio);
   /**
    * delete an audio source
    * @param[in] id id number of an audio source to delete
    */
   bool removeAudioSource(int audio_source_id);
   /**
-   * update an audio source
-   */
-  bool updateAudioSource(int audio_source_id, spatial_audio_msgs::PlaySpatialAudio::Request& req);
-  /**
    * check if there is an audio source object with a specified id
    * @param[in] id id number of an audio source to check
    */
-  std::list<SpatialAudioSource>::iterator findAudioSource(int audio_source_id);
-  /**
-   * update transformation values from head frame to each source frame.
-   */
-  void updateCoordinates();
+  std::optional<std::list<SpatialAudioSource>::iterator> findAudioSource(int audio_source_id);
   /**
    * @brief get a unique audio source id for new audio source.
    *
    */
-  int newAudioSourceID();
+  int getNewSourceID();
+  /**
+   * update transformation values from head frame to each source frame.
+   */
+  void updateCoordinates();
 
   /**
    * OpenAL resources
@@ -111,11 +119,11 @@ private:
   ros::NodeHandle& nh_private_;
   tf2_ros::Buffer& tf_buffer_;
   ros::ServiceServer srv_add_;
+  ros::ServiceServer srv_update_;
   ros::ServiceServer srv_remove_;
   ros::ServiceServer srv_remove_all_;
-  ros::ServiceServer srv_update_;
-  ros::ServiceServer srv_stop_;
   ros::ServiceServer srv_play_;
+  ros::ServiceServer srv_stop_;
   ros::Publisher pub_audio_source_array_;
   boost::shared_ptr<ros::AsyncSpinner> ptr_spinner_;
   std::string head_frame_id_;
