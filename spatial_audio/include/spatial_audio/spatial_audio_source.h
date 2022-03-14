@@ -25,7 +25,7 @@ class SpatialAudioSource
 public:
   SpatialAudioSource();
   SpatialAudioSource(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id,
-                     geometry_msgs::Pose source_pose, std::string stream_topic_info, std::string stream_topic_audio,
+                     geometry_msgs::Pose source_pose, std::string stream_topic_audio, std::string stream_topic_info,
                      double timeout = 1.0);
   ~SpatialAudioSource();
   /**
@@ -44,7 +44,7 @@ public:
    * @param[in] req a request of an audio source to add
    */
   bool init(ros::NodeHandle& nh, int audio_source_id, std::string source_frame_id, geometry_msgs::Pose source_pose,
-            std::string stream_topic_info, std::string stream_topic_audio, double timeout = 1.0);
+            std::string stream_topic_audio, std::string stream_topic_info, double timeout = 1.0);
   /**
    * Finalization function. This function should be called when an audio source is discarded.
    */
@@ -56,8 +56,8 @@ public:
   /**
    * update parameters of and audio source
    */
-  void update(std::string& source_frame_id, geometry_msgs::Pose& source_pose, std::string& stream_topic_info,
-              std::string& stream_topic_audio);
+  void update(std::string& source_frame_id, geometry_msgs::Pose& source_pose, std::string& stream_topic_audio,
+              std::string& stream_topic_info);
   /**
    * update the pose of an audio source
    * @param[in] head_frame_id frame_id of a head
