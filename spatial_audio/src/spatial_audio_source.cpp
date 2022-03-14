@@ -126,8 +126,8 @@ bool SpatialAudioSource::init(ros::NodeHandle& nh, int audio_source_id, std::str
   /**
    * Debug print
    */
-  ROS_INFO("Add an audio source object. id: %d, frame_id: %s, stream topic: %s", this->audio_source_id_,
-           this->source_frame_id_.c_str(), stream_topic_audio.c_str());
+  ROS_DEBUG("Add an audio source object. id: %d, frame_id: %s, stream topic: %s", this->audio_source_id_,
+            this->source_frame_id_.c_str(), stream_topic_audio.c_str());
   /**
    * return
    */
@@ -140,13 +140,12 @@ bool SpatialAudioSource::init(ros::NodeHandle& nh, int audio_source_id, std::str
 
 void SpatialAudioSource::close()
 {
-  this->mtx_.lock();
+  std::lock_guard<std::mutex> lock(this->mtx_);
   this->stream_subscriber_.shutdown();
   if (this->getSourceState() != AL_PLAYING)
   {
     alSourceStop(this->al_source_id_);
   }
-  this->mtx_.unlock();
   // release buffer object
   this->dequeALBuffers();
   // release source obect
@@ -163,21 +162,18 @@ void SpatialAudioSource::verbose()
 void SpatialAudioSource::update(std::string& source_frame_id, geometry_msgs::Pose& source_pose,
                                 std::string& stream_topic_info, std::string& stream_topic_audio)
 {
-  this->mtx_.lock();
+  std::lock_guard<std::mutex> lock(this->mtx_);
   this->source_frame_id_ = source_frame_id;
   this->source_pose_ = source_pose;
   // TODO: update process for ros topic
-  this->mtx_.unlock();
 }
 
 void SpatialAudioSource::updateCoordinate(std::string& head_frame_id, tf2_ros::Buffer& tf_buffer, ALCcontext* context)
 {
   geometry_msgs::TransformStamped transform_reference2head;
   geometry_msgs::Pose pose_source;
-  this->mtx_.lock();
   std::string source_frame_id = this->source_frame_id_;
   geometry_msgs::Pose source_pose = this->source_pose_;
-  this->mtx_.unlock();
   try
   {
     transform_reference2head = tf_buffer.lookupTransform(head_frame_id.c_str(), source_frame_id.c_str(), ros::Time(0));
@@ -196,42 +192,76 @@ void SpatialAudioSource::updateCoordinate(std::string& head_frame_id, tf2_ros::B
 
   alcSuspendContext(context);
   {
+    std::lock_guard<std::mutex> lock(this->mtx_);
     ALfloat pos_source[3];
     pos_source[0] = pose_source.position.x;
     pos_source[1] = pose_source.position.y;
     pos_source[2] = pose_source.position.z;
-    this->mtx_.lock();
     alSourcefv(this->al_source_id_, AL_POSITION, pos_source);
-    this->mtx_.unlock();
   }
   alcProcessContext(context);
-}
-
-void SpatialAudioSource::dequeALBuffers()
-{
-  ALsizei n, m;
-  this->mtx_.lock();
-  alGetSourcei(this->al_source_id_, AL_BUFFERS_PROCESSED, &n);  // get a number of buffers processed.
-  ALuint* buffers = new ALuint[n];  // These buffers should be released. Maybe shared_ptr should be used.
-  alSourceUnqueueBuffers(this->al_source_id_, n, buffers);  // unqueue the buffers
-  alDeleteBuffers(n, buffers);
-  delete[] buffers;
-  alGetSourcei(this->al_source_id_, AL_BUFFERS_QUEUED, &m);
-  this->mtx_.unlock();
-
-  ROS_INFO("id:%d, %d buffers processed, %d buffers remains.", this->audio_source_id_, n, m);
-}
-
-ALint SpatialAudioSource::getSourceState()
-{
-  ALint source_state;
-  alGetSourcei(this->al_source_id_, AL_SOURCE_STATE, &source_state);
-  return source_state;
 }
 
 bool SpatialAudioSource::isPlaying()
 {
   return playing_;
+}
+
+void SpatialAudioSource::startSourcePlay(bool buffering, int buffer_num)
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  this->playing_ = true;
+  if (buffering)
+  {
+    this->waitBuffering(buffer_num);
+  }
+  alSourcePlay(this->al_source_id_);
+}
+
+void SpatialAudioSource::stopSourcePlay()
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  alSourceStop(this->al_source_id_);
+  this->playing_ = false;
+}
+
+int SpatialAudioSource::getAudioSourceID()
+{
+  return this->audio_source_id_;
+}
+
+spatial_audio_msgs::AudioSource SpatialAudioSource::convertToROSMsg()
+{
+  spatial_audio_msgs::AudioSource msg;
+  msg.source_frame_id = this->source_frame_id_;
+  msg.audio_source_id = this->audio_source_id_;
+  msg.source_pose = this->source_pose_;
+  msg.stream_topic_audio = stream_topic_audio_;
+  msg.stream_topic_info = stream_topic_info_;
+  return msg;
+}
+
+void SpatialAudioSource::callbackAudioStream(const boost::shared_ptr<audio_stream_msgs::AudioData const>& ptr_msg)
+{
+  std::lock_guard<std::mutex> lock(this->mtx_);
+  this->dequeALBuffers();
+
+  // enqueue a new buffer with the received data
+  if (this->playing_)
+  {
+    ALuint buffer_id;
+    ALsizei buffer_size = ptr_msg->data.size();
+    genBufferFromPCM(buffer_id, (ALvoid*)ptr_msg->data.data(), buffer_size, this->stream_sampling_rate_,
+                     this->stream_format_);
+    alSourceQueueBuffers(this->al_source_id_, 1, &buffer_id);
+
+    ROS_DEBUG("New data containes %d bytes.", buffer_size);
+  }
+
+  if (this->playing_ and this->initialized_ and this->getSourceState() != AL_PLAYING)
+  {
+    alSourcePlay(this->al_source_id_);
+  }
 }
 
 void SpatialAudioSource::waitBuffering(int buffer_num)
@@ -249,64 +279,24 @@ void SpatialAudioSource::waitBuffering(int buffer_num)
   }
 }
 
-void SpatialAudioSource::startSourcePlay(bool buffering, int buffer_num)
+void SpatialAudioSource::dequeALBuffers()
 {
-  this->mtx_.lock();
-  this->playing_ = true;
-  if (buffering)
-  {
-    this->waitBuffering(buffer_num);
-  }
-  alSourcePlay(this->al_source_id_);
-  this->mtx_.unlock();
+  ALsizei n, m;
+  alGetSourcei(this->al_source_id_, AL_BUFFERS_PROCESSED, &n);  // get a number of buffers processed.
+  ALuint* buffers = new ALuint[n];  // These buffers should be released. Maybe shared_ptr should be used.
+  alSourceUnqueueBuffers(this->al_source_id_, n, buffers);  // unqueue the buffers
+  alDeleteBuffers(n, buffers);
+  delete[] buffers;
+  alGetSourcei(this->al_source_id_, AL_BUFFERS_QUEUED, &m);
+
+  ROS_DEBUG("id:%d, %d buffers processed, %d buffers remains.", this->audio_source_id_, n, m);
 }
 
-void SpatialAudioSource::stopSourcePlay()
+ALint SpatialAudioSource::getSourceState()
 {
-  this->mtx_.lock();
-  alSourceStop(this->al_source_id_);
-  this->playing_ = false;
-  this->mtx_.unlock();
-}
-
-int SpatialAudioSource::getAudioSourceID()
-{
-  return this->audio_source_id_;
-}
-
-void SpatialAudioSource::callbackAudioStream(const boost::shared_ptr<audio_stream_msgs::AudioData const>& ptr_msg)
-{
-  this->dequeALBuffers();
-
-  // enqueue a new buffer with recieved data
-  if (this->playing_)
-  {
-    ALuint buffer_id;
-    ALsizei buffer_size = ptr_msg->data.size();
-    genBufferFromPCM(buffer_id, (ALvoid*)ptr_msg->data.data(), buffer_size, this->stream_sampling_rate_,
-                     this->stream_format_);
-    this->mtx_.lock();
-    alSourceQueueBuffers(this->al_source_id_, 1, &buffer_id);
-    this->mtx_.unlock();
-
-    ROS_INFO("New data containes %d bytes.", buffer_size);
-  }
-
-  if (this->playing_ and this->initialized_ and this->getSourceState() != AL_PLAYING)
-  {
-    alSourcePlay(this->al_source_id_);
-  }
-}
-
-spatial_audio_msgs::AudioSource SpatialAudioSource::convertToROSMsg()
-{
-  spatial_audio_msgs::AudioSource msg;
-  msg.source_frame_id = this->source_frame_id_;
-  msg.audio_source_id = this->audio_source_id_;
-  msg.source_pose = this->source_pose_;
-  msg.stream_topic_audio = stream_topic_audio_;
-  msg.stream_topic_info = stream_topic_info_;
-  return msg;
+  ALint source_state;
+  alGetSourcei(this->al_source_id_, AL_SOURCE_STATE, &source_state);
+  return source_state;
 }
 
 }  // namespace spatial_audio

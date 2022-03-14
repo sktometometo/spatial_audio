@@ -66,21 +66,9 @@ public:
    */
   void updateCoordinate(std::string& head_frame_id, tf2_ros::Buffer& tf_buffer, ALCcontext* context);
   /**
-   * deque OpenAL buffers done
-   */
-  void dequeALBuffers();
-  /**
-   * Return OpenAL state of the source
-   */
-  ALint getSourceState();
-  /**
    * Return is the source is playing
    */
   bool isPlaying();
-  /**
-   * @brief Wait for buffering.
-   */
-  void waitBuffering(int buffer_num = 1);
   /**
    * Start playing the source
    */
@@ -104,11 +92,26 @@ private:
    * ROS callback function for buffering stream audio
    */
   void callbackAudioStream(const boost::shared_ptr<audio_stream_msgs::AudioData const>& ptr_msg);
+  /**
+   * deque OpenAL buffers done
+   *   Race condition is not considered
+   */
+  void dequeALBuffers();
+  /**
+   * @brief Wait for buffering.
+   *   Race condition is not considered
+   */
+  void waitBuffering(int buffer_num = 1);
+  /**
+   * Return OpenAL state of the source
+   *   Race condition is not considered
+   */
+  ALint getSourceState();
 
   int audio_source_id_;  // audio source id
   std::mutex mtx_;       // mutex for controling access to the resource
-  bool initialized_;     // flag if initialization is done
-  bool playing_;         // flag if the source is playing
+  bool initialized_;     // flag for initialization
+  bool playing_;         // flag for playing
   /*
    * ROS related variables
    */
