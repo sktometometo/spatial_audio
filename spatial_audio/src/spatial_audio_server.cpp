@@ -16,7 +16,12 @@
 #include <audio_stream_msgs/AudioData.h>
 #include <audio_stream_msgs/AudioInfo.h>
 #include <geometry_msgs/Pose.h>
-#include <spatial_audio_msgs/PlaySpatialAudio.h>
+#include <spatial_audio_msgs/AudioSource.h>
+#include <spatial_audio_msgs/AudioSourceArray.h>
+#include <spatial_audio_msgs/AddSpatialAudio.h>
+#include <spatial_audio_msgs/RemoveSpatialAudio.h>
+#include <spatial_audio_msgs/UpdateSpatialAudio.h>
+#include <spatial_audio_msgs/TriggerSpatialAudio.h>
 // OpenAL headers
 #include <AL/al.h>
 #include <AL/alc.h>
@@ -28,7 +33,7 @@
 
 namespace spatial_audio
 {
-SpatialAudioServer::SpatialAudioServer(ros::NodeHandle &nh, ros::NodeHandle &nh_private, tf2_ros::Buffer &tf_buffer)
+SpatialAudioServer::SpatialAudioServer(ros::NodeHandle& nh, ros::NodeHandle& nh_private, tf2_ros::Buffer& tf_buffer)
   : nh_(nh), nh_private_(nh_private), tf_buffer_(tf_buffer)
 {
   // ROS params
@@ -42,9 +47,11 @@ SpatialAudioServer::SpatialAudioServer(ros::NodeHandle &nh, ros::NodeHandle &nh_
                                                   spatial_audio_msgs::PlaySpatialAudio::Response>(
       std::string("play_source"), &SpatialAudioServer::handlerPlayService, this);
 
+  // Publisher
+
   // OpenAL
   // Opening an device
-  const ALCchar *devicename = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
+  const ALCchar* devicename = alcGetString(NULL, ALC_DEFAULT_DEVICE_SPECIFIER);
   this->device_ = alcOpenDevice(devicename);
   if (not this->device_)
   {
@@ -124,7 +131,7 @@ void SpatialAudioServer::spin(int spin_rate)
       ROS_INFO("Available HRTFs:\n");
       for (int i = 0; i < num_hrtf; i++)
       {
-        const ALCchar *name = alcGetStringiSOFT(device_, ALC_HRTF_SPECIFIER_SOFT, i);
+        const ALCchar* name = alcGetStringiSOFT(device_, ALC_HRTF_SPECIFIER_SOFT, i);
         ROS_INFO("    %d: %s\n", i, name);
         if (hrtfname_ == name)
         {
@@ -166,7 +173,7 @@ void SpatialAudioServer::spin(int spin_rate)
     }
     else
     {
-      const ALchar *name = alcGetString(device_, ALC_HRTF_SPECIFIER_SOFT);
+      const ALchar* name = alcGetString(device_, ALC_HRTF_SPECIFIER_SOFT);
       ROS_INFO("HRTF enabled, using %s", name);
     }
   }
@@ -203,8 +210,8 @@ void SpatialAudioServer::spin(int spin_rate)
   }
 }
 
-bool SpatialAudioServer::handlerPlayService(spatial_audio_msgs::PlaySpatialAudio::Request &req,
-                                            spatial_audio_msgs::PlaySpatialAudio::Response &res)
+bool SpatialAudioServer::handlerPlayService(spatial_audio_msgs::PlaySpatialAudio::Request& req,
+                                            spatial_audio_msgs::PlaySpatialAudio::Response& res)
 {
   bool ret;
   switch (req.action)
@@ -324,7 +331,7 @@ bool SpatialAudioServer::handlerPlayService(spatial_audio_msgs::PlaySpatialAudio
   return ret;
 }
 
-bool SpatialAudioServer::addSource(spatial_audio_msgs::PlaySpatialAudio::Request &req)
+bool SpatialAudioServer::addAudioSource(spatial_audio_msgs::PlaySpatialAudio::Request& req)
 {
   auto itr = this->list_audio_source_.emplace(this->list_audio_source_.begin());
   bool ret = itr->init(this->nh_, req.id, req.header.frame_id, req.pose, req.stream_topic_info, req.stream_topic_audio,
@@ -346,7 +353,7 @@ bool SpatialAudioServer::delSource(int id)
   }
 }
 
-bool SpatialAudioServer::updateSource(int id, spatial_audio_msgs::PlaySpatialAudio::Request &req)
+bool SpatialAudioServer::updateSource(int id, spatial_audio_msgs::PlaySpatialAudio::Request& req)
 {
   auto itr = this->findSource(id);
   if (itr != this->list_audio_source_.end())
@@ -364,7 +371,7 @@ std::list<SpatialAudioSource>::iterator SpatialAudioServer::findSource(int id)
 {
   std::list<SpatialAudioSource>::iterator itr =
       std::find_if(this->list_audio_source_.begin(), this->list_audio_source_.end(),
-                   [&id](SpatialAudioSource &x) { return x.getAudioSourceID() == id; });
+                   [&id](SpatialAudioSource& x) { return x.getAudioSourceID() == id; });
   return itr;
 }
 
