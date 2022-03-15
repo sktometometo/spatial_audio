@@ -3,6 +3,8 @@
     <arg name="head_frame_id" default="head"/>
     <arg name="filename" default="$(find audio_stream_demo)/sound/amenoyoru.wav"/>
 
+    <env name="ROSCONSOLE_CONFIG_FILE" value="$(find spatial_audio_demo)/config/rosconsole_debug.conf"/>
+
     <node name="audio_source_interactive_marker" pkg="spatial_audio_demo" type="audio_source_interactive_marker" output="log" required="true">
         <param name="~description" value=""/>
         <param name="~name" value="audio_source_interactive_marker"/>
