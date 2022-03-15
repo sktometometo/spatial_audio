@@ -71,6 +71,7 @@ public:
   bool isPlaying();
   /**
    * Start playing the source
+   *   Race condition is not considered
    */
   void startSourcePlay(bool buffering = true, int buffer_num = 1);
   /**
