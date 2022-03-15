@@ -225,10 +225,6 @@ void SpatialAudioServer::spin(int spin_rate)
                 vector_finished_id.size(),
                 this->list_audio_source_.size() - vector_finished_id.size() );
     */
-    for (auto itr = this->list_audio_source_.begin(); itr != this->list_audio_source_.end(); itr++)
-    {
-      itr->verbose();
-    }
     std::vector<int> vector_stopped_id;
     std::vector<int> vector_playing_id;
     this->updateCoordinates();
