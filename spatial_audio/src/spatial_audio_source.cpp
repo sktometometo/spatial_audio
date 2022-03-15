@@ -246,6 +246,9 @@ void SpatialAudioSource::callbackAudioStream(const boost::shared_ptr<audio_strea
   std::lock_guard<std::mutex> lock(this->mtx_);
   this->dequeALBuffers();
 
+  ROS_DEBUG_STREAM("data received: " << *ptr_msg);
+  ROS_DEBUG_STREAM("Current state: playing: " << this->playing_);
+
   // enqueue a new buffer with the received data
   if (this->playing_)
   {
@@ -269,6 +272,7 @@ void SpatialAudioSource::waitBuffering(int buffer_num)
   /**
    * Wait until buffering
    */
+  this->playing_ = true;
   ALsizei n = 0;
   while (n < buffer_num)
   {
