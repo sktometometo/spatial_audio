@@ -202,6 +202,8 @@ void SpatialAudioServer::spin(int spin_rate)
   // start callback spinner
   this->ptr_spinner_->start();
 
+  ROS_INFO("spatial_audio_server started.");
+
   // start main loop
   ros::Rate r(spin_rate);
   while (ros::ok())
@@ -223,6 +225,10 @@ void SpatialAudioServer::spin(int spin_rate)
                 vector_finished_id.size(),
                 this->list_audio_source_.size() - vector_finished_id.size() );
     */
+    for (auto itr = this->list_audio_source_.begin(); itr != this->list_audio_source_.end(); itr++)
+    {
+      itr->verbose();
+    }
     std::vector<int> vector_stopped_id;
     std::vector<int> vector_playing_id;
     this->updateCoordinates();
@@ -234,6 +240,7 @@ void SpatialAudioServer::spin(int spin_rate)
 bool SpatialAudioServer::handlerAddService(spatial_audio_msgs::AddSpatialAudio::Request& req,
                                            spatial_audio_msgs::AddSpatialAudio::Response& res)
 {
+  ROS_DEBUG_STREAM("add called." << req);
   std::lock_guard<std::mutex> lock(this->mtx_audio_source_);
   int audio_source_id = this->getNewSourceID();
   auto result = this->addAudioSource(audio_source_id, req.audio_source.source_frame_id, req.audio_source.source_pose,
@@ -243,6 +250,7 @@ bool SpatialAudioServer::handlerAddService(spatial_audio_msgs::AddSpatialAudio::
     this->removeAudioSource(audio_source_id);
     res.success = true;
     res.message = std::string("Failed to add audio source");
+    ROS_DEBUG_STREAM("add finished." << res);
     return false;
   }
 
@@ -253,6 +261,7 @@ bool SpatialAudioServer::handlerAddService(spatial_audio_msgs::AddSpatialAudio::
   }
   res.success = true;
   res.audio_source_id = audio_source_id;
+  ROS_DEBUG_STREAM("add finished." << res);
   return true;
 }
 
@@ -364,10 +373,12 @@ SpatialAudioServer::addAudioSource(int audio_source_id, std::string source_frame
       itr->init(this->nh_, audio_source_id, source_frame_id, source_pose, stream_topic_audio, stream_topic_info);
   if (success)
   {
+    ROS_DEBUG_STREAM("Add an audio source.");
     return itr;
   }
   else
   {
+    ROS_DEBUG_STREAM("Failed to add an audio source.");
     return std::nullopt;
   }
 }
@@ -381,10 +392,12 @@ SpatialAudioServer::updateAudioSource(int audio_source_id, std::string source_fr
   {
     auto itr = result.value();
     itr->update(source_frame_id, source_pose, stream_topic_audio, stream_topic_info);
+    ROS_DEBUG_STREAM("Update an audio source.");
     return itr;
   }
   else
   {
+    ROS_DEBUG_STREAM("Failed to update an audio source. id: " << audio_source_id);
     return std::nullopt;
   }
 }
