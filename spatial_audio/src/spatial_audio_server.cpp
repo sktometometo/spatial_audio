@@ -247,7 +247,7 @@ bool SpatialAudioServer::handlerAddService(spatial_audio_msgs::AddSpatialAudio::
     res.success = true;
     res.message = std::string("Failed to add audio source");
     ROS_DEBUG_STREAM("add finished." << res);
-    return false;
+    return true;
   }
 
   if (req.auto_play)
@@ -277,7 +277,7 @@ bool SpatialAudioServer::handlerUpdateService(spatial_audio_msgs::UpdateSpatialA
     res.success = false;
     res.message = std::string("Failed to update audio source");
   }
-  return res.success;
+  return true;
 }
 
 bool SpatialAudioServer::handlerRemoveService(spatial_audio_msgs::TriggerSpatialAudio::Request& req,
@@ -294,7 +294,7 @@ bool SpatialAudioServer::handlerRemoveService(spatial_audio_msgs::TriggerSpatial
     res.success = success;
     res.message = std::string("Failed to remove audio source");
   }
-  return success;
+  return true;
 }
 
 bool SpatialAudioServer::handlerRemoveAllService(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
@@ -317,7 +317,7 @@ bool SpatialAudioServer::handlerRemoveAllService(std_srvs::Trigger::Request& req
     res.success = success;
     res.message = std::string("Failed to remove all audio source");
   }
-  return success;
+  return true;
 }
 
 bool SpatialAudioServer::handlerPlayService(spatial_audio_msgs::TriggerSpatialAudio::Request& req,
@@ -329,7 +329,7 @@ bool SpatialAudioServer::handlerPlayService(spatial_audio_msgs::TriggerSpatialAu
   {
     res.success = false;
     res.message = "Failed to find audio source.";
-    return false;
+    return true;
   }
   else
   {
@@ -349,7 +349,7 @@ bool SpatialAudioServer::handlerStopService(spatial_audio_msgs::TriggerSpatialAu
   {
     res.success = false;
     res.message = "Failed to find audio source.";
-    return false;
+    return true;
   }
   else
   {
