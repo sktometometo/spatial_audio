@@ -42,3 +42,9 @@ add_executable(audio_source_interactive_marker
 target_link_libraries(audio_source_interactive_marker
     ${catkin_LIBRARIES}
 )
+
+if (CATKIN_ENABLE_TESTING)
+    find_package(rostest REQUIRED)
+    add_rostest(test/test_spatial_audio_with_auto_play.test)
+    add_rostest(test/test_spatial_audio_without_auto_play.test)
+endif()
