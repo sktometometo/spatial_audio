@@ -84,12 +84,12 @@ class SpatialAudioClient(object):
         req.audio_source.stream_topic_audio = stream_topic_audio
         req.audio_source.stream_topic_info = stream_topic_info
         res = self._client_update_audio_source(req)
-        return res.success. res.message
+        return res.success, res.message
 
     def remove_audio_source(self, audio_source_id):
 
         req = TriggerSpatialAudioRequest()
-        req.id = audio_source_id
+        req.audio_source_id = audio_source_id
         res = self._client_remove_audio_source(req)
         return res.success, res.message
 
