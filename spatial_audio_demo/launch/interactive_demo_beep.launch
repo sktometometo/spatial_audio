@@ -1,6 +1,5 @@
 <launch>
     <arg name="head_frame_id"   default="head" />
-    <arg name="filename" default="$(find audio_stream_demo)/sound/amenoyoru.wav" />
 
     <node
         name="target_interactive_marker"

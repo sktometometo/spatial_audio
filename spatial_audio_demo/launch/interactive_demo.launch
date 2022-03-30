@@ -1,7 +1,7 @@
 <launch>
     <arg name="audio_source_frame_id" default="audio_source"/>
     <arg name="head_frame_id" default="head"/>
-    <arg name="filename" default="$(find audio_stream_demo)/sound/amenoyoru.wav"/>
+    <arg name="filename" default="$(find spatial_audio_demo)/sound/amenoyoru.wav"/>
     <arg name="debug" default="false"/>
 
     <env name="ROSCONSOLE_CONFIG_FILE" value="$(find spatial_audio_demo)/config/rosconsole_debug.conf" if="$(arg debug)"/>
@@ -37,7 +37,7 @@
         <param name="~color_b" value="0.8"/>
     </node>
 
-    <node name="audio_stream_publisher" pkg="audio_stream" type="audio_stream_publisher.py" output="screen" required="true">
+    <node name="audio_stream_publisher" pkg="spatial_audio_demo" type="audio_stream_publisher.py" output="screen" required="true">
         <param name="~filename" value="$(arg filename)"/>
         <param name="~max_precede" value="0.1"/>
     </node>

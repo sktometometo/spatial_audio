@@ -5,7 +5,7 @@ project(spatial_audio_demo)
 add_definitions(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
-  audio_stream_msgs
+  audio_common_msgs
   interactive_markers
   roscpp
   rospy
@@ -19,7 +19,7 @@ find_package(Boost REQUIRED)
 
 catkin_package(
   CATKIN_DEPENDS
-      audio_stream_msgs
+      audio_common_msgs
       interactive_markers
       roscpp
       rospy

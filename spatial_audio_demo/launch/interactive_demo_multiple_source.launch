@@ -2,8 +2,8 @@
     <arg name="audio_source_1_frame_id" default="audio_source_1" />
     <arg name="audio_source_2_frame_id" default="audio_source_2" />
     <arg name="head_frame_id"   default="head" />
-    <arg name="filename_1" default="$(find audio_stream_demo)/sound/amenoyoru.wav" />
-    <arg name="filename_2" default="$(find audio_stream_demo)/sound/minamijujisei.wav" />
+    <arg name="filename_1" default="$(find spatial_audio_demo)/sound/amenoyoru.wav" />
+    <arg name="filename_2" default="$(find spatial_audio_demo)/sound/minamijujisei.wav" />
 
     <node
         name="audio_source_interactive_marker_1"
@@ -83,7 +83,7 @@
 
     <node
         name="audio_stream_publisher_1"
-        pkg="audio_stream"
+        pkg="spatial_audio_demo"
         type="audio_stream_publisher.py"
         output="screen"
         required="true"
@@ -94,7 +94,7 @@
 
     <node
         name="audio_stream_publisher_2"
-        pkg="audio_stream"
+        pkg="spatial_audio_demo"
         type="audio_stream_publisher.py"
         output="screen"
         required="true"

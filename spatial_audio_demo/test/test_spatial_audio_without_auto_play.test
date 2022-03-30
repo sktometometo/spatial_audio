@@ -1,7 +1,7 @@
 <launch>
     <arg name="audio_source_frame_id" default="audio_source" />
     <arg name="head_frame_id" default="head" />
-    <arg name="filename" default="$(find audio_stream_demo)/sound/amenoyoru.wav" />
+    <arg name="filename" default="$(find spatial_audio_demo)/sound/amenoyoru.wav" />
     <arg name="debug" default="false" />
 
     <node pkg="spatial_audio" name="spatial_audio_server_node" type="spatial_audio_server_node" output="screen" required="true">
@@ -11,7 +11,7 @@
 
     <node pkg="tf2_ros" type="static_transform_publisher" name="static_transform_publisher" args="0 0 0 0 0 0 $(arg head_frame_id) $(arg audio_source_frame_id)" />
 
-    <node name="audio_stream_publisher" pkg="audio_stream" type="audio_stream_publisher.py" output="screen" required="true">
+    <node name="audio_stream_publisher" pkg="spatial_audio_demo" type="audio_stream_publisher.py" output="screen" required="true">
         <param name="~filename" value="$(arg filename)" />
         <param name="~max_precede" value="0.1" />
     </node>
