@@ -30,8 +30,8 @@ frame_id for the center of a virtual head.
 
 ### request.stream_topic_audio ( string )
 
-rostopic name for audio stream data ( audio_stream_msgs/AudioData )
+rostopic name for audio stream data ( audio_common_msgs/AudioData )
 
 ### request.stream_topic_info ( string )
 
-rostopic name for audio stream meta information ( audio_stream_msgs/AudioInfo )
+rostopic name for audio stream meta information ( audio_common_msgs/AudioInfo )

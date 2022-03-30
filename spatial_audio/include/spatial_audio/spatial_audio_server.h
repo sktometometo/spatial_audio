@@ -14,8 +14,8 @@
 #include <AL/alc.h>
 #include <AL/alext.h>
 // ROS
-#include <audio_stream_msgs/AudioData.h>
-#include <audio_stream_msgs/AudioInfo.h>
+#include <audio_common_msgs/AudioData.h>
+#include <audio_common_msgs/AudioInfo.h>
 #include <geometry_msgs/Pose.h>
 #include <ros/ros.h>
 #include <spatial_audio_msgs/AudioSourceArray.h>

@@ -5,7 +5,7 @@ project(spatial_audio)
 add_compile_options(-std=c++17)
 
 find_package(catkin REQUIRED COMPONENTS
-    audio_stream_msgs
+    audio_common_msgs
     spatial_audio_msgs
     geometry_msgs
     roscpp
@@ -23,7 +23,7 @@ catkin_package(
     INCLUDE_DIRS include
     LIBRARIES ${PROJECT_NAME}
     CATKIN_DEPENDS 
-        audio_stream_msgs
+        audio_common_msgs
         spatial_audio_msgs
         geometry_msgs
         roscpp

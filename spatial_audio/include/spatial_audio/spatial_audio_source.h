@@ -13,8 +13,8 @@
 #include <ros/ros.h>
 #include <tf2_ros/transform_listener.h>
 // ROS Messages
-#include <audio_stream_msgs/AudioData.h>
-#include <audio_stream_msgs/AudioInfo.h>
+#include <audio_common_msgs/AudioData.h>
+#include <audio_common_msgs/AudioInfo.h>
 #include <geometry_msgs/Pose.h>
 #include <spatial_audio_msgs/AudioSource.h>
 
@@ -92,7 +92,7 @@ private:
   /**
    * ROS callback function for buffering stream audio
    */
-  void callbackAudioStream(const boost::shared_ptr<audio_stream_msgs::AudioData const>& ptr_msg);
+  void callbackAudioStream(const boost::shared_ptr<audio_common_msgs::AudioData const>& ptr_msg);
   /**
    * deque OpenAL buffers done
    *   Race condition is not considered

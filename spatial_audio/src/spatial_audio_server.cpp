@@ -14,8 +14,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_listener.h>
 // ROS Messages and Services
-#include <audio_stream_msgs/AudioData.h>
-#include <audio_stream_msgs/AudioInfo.h>
+#include <audio_common_msgs/AudioData.h>
+#include <audio_common_msgs/AudioInfo.h>
 #include <geometry_msgs/Pose.h>
 #include <spatial_audio_msgs/AudioSource.h>
 #include <spatial_audio_msgs/AudioSourceArray.h>

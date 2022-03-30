@@ -10,8 +10,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_listener.h>
 // ROS Messages
-#include <audio_stream_msgs/AudioData.h>
-#include <audio_stream_msgs/AudioInfo.h>
+#include <audio_common_msgs/AudioData.h>
+#include <audio_common_msgs/AudioInfo.h>
 #include <geometry_msgs/Pose.h>
 #include <spatial_audio_msgs/AudioSource.h>
 // User
@@ -75,30 +75,26 @@ bool SpatialAudioSource::init(ros::NodeHandle& nh, int audio_source_id, std::str
   /**
    * Get a audio info message for meta information of audio stream
    */
-  audio_stream_msgs::AudioInfo::ConstPtr info =
-      ros::topic::waitForMessage<audio_stream_msgs::AudioInfo>(stream_topic_info, ros::Duration(timeout));
+  audio_common_msgs::AudioInfo::ConstPtr info =
+      ros::topic::waitForMessage<audio_common_msgs::AudioInfo>(stream_topic_info, ros::Duration(timeout));
   if (not info)
   {
     ROS_ERROR("Cannot retrive a message from info topic: %s", stream_topic_info.c_str());
     return false;
   }
-  if (info->channels == audio_stream_msgs::AudioInfo::AUDIOINFO_CHANNELS_MONAURAL &&
-      info->width == audio_stream_msgs::AudioInfo::AUDIOINFO_WIDTH_8BIT)
+  if (info->channels == 1 && info->sample_format == "S8" )
   {
     this->stream_format_ = AL_FORMAT_MONO8;
   }
-  else if (info->channels == audio_stream_msgs::AudioInfo::AUDIOINFO_CHANNELS_MONAURAL &&
-           info->width == audio_stream_msgs::AudioInfo::AUDIOINFO_WIDTH_16BIT)
+  else if (info->channels == 1 && info->sample_format == "S16LE" )
   {
     this->stream_format_ = AL_FORMAT_MONO16;
   }
-  else if (info->channels == audio_stream_msgs::AudioInfo::AUDIOINFO_CHANNELS_STEREO &&
-           info->width == audio_stream_msgs::AudioInfo::AUDIOINFO_WIDTH_8BIT)
+  else if (info->channels == 2 && info->sample_format == "S8" )
   {
     this->stream_format_ = AL_FORMAT_STEREO8;
   }
-  else if (info->channels == audio_stream_msgs::AudioInfo::AUDIOINFO_CHANNELS_STEREO &&
-           info->width == audio_stream_msgs::AudioInfo::AUDIOINFO_WIDTH_16BIT)
+  else if (info->channels == 2 && info->sample_format == "S16LE" )
   {
     this->stream_format_ = AL_FORMAT_STEREO16;
   }
@@ -107,7 +103,7 @@ bool SpatialAudioSource::init(ros::NodeHandle& nh, int audio_source_id, std::str
     ROS_ERROR("Invalid channels or bit per sample in rosservice.");
     return false;
   }
-  this->stream_sampling_rate_ = info->sampling_rate;
+  this->stream_sampling_rate_ = info->sample_rate;
   /**
    * generating OpenAL resources
    */
@@ -122,7 +118,7 @@ bool SpatialAudioSource::init(ros::NodeHandle& nh, int audio_source_id, std::str
    * Subscribe the audio stream topic
    */
   this->stream_subscriber_ =
-      nh.subscribe<audio_stream_msgs::AudioData>(stream_topic_audio, 1, &SpatialAudioSource::callbackAudioStream, this);
+      nh.subscribe<audio_common_msgs::AudioData>(stream_topic_audio, 1, &SpatialAudioSource::callbackAudioStream, this);
   /**
    * Debug print
    */
@@ -240,7 +236,7 @@ spatial_audio_msgs::AudioSource SpatialAudioSource::convertToROSMsg()
   return msg;
 }
 
-void SpatialAudioSource::callbackAudioStream(const boost::shared_ptr<audio_stream_msgs::AudioData const>& ptr_msg)
+void SpatialAudioSource::callbackAudioStream(const boost::shared_ptr<audio_common_msgs::AudioData const>& ptr_msg)
 {
   std::lock_guard<std::mutex> lock(this->mtx_);
   this->dequeALBuffers();
