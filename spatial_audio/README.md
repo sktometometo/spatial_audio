@@ -1,5 +1,7 @@
 # spatial_audio
 
+[![CI](https://github.com/sktometometo/spatial_audio/actions/workflows/main.yaml/badge.svg)](https://github.com/sktometometo/spatial_audio/actions/workflows/main.yaml)
+
 This package provides the spatial_audio server node. The node will play spatial_audio from virtual spatial audio sources generated from requests.
 
 A request usually contains id, action type, frame_id, pose and topicname of stream audio data and meta information. Please see sample client script in spatial_audio_demo package for details.
