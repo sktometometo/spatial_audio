@@ -1,5 +1,7 @@
 # spatial_audio
 
+[![CI](https://github.com/sktometometo/spatial_audio/actions/workflows/main.yaml/badge.svg)](https://github.com/sktometometo/spatial_audio/actions/workflows/main.yaml)
+
 This package provides spatial audio playing capability according to ROS tf information with ear phones.
 
 ## Demo
