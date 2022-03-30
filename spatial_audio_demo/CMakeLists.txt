@@ -23,6 +23,7 @@ catkin_package(
       interactive_markers
       roscpp
       rospy
+      spatial_audio
       spatial_audio_msgs
       tf2
       tf2_ros
@@ -43,6 +44,9 @@ target_link_libraries(audio_source_interactive_marker
     ${catkin_LIBRARIES}
 )
 
+#########
+# Testing #
+#########
 if (CATKIN_ENABLE_TESTING)
     find_package(rostest REQUIRED)
     add_rostest(test/test_spatial_audio_with_auto_play.test)
