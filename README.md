@@ -11,7 +11,6 @@ This package provides spatial audio playing capability according to ROS tf infor
 These package depend on libraries and packages below.
 
 - [OpenAL-soft](https://github.com/kcat/openal-soft)
-- [audio_stream](https://github.com/sktometometo/audio_stream)
 
 ## How to use
 
@@ -28,3 +27,7 @@ This repository is ditributed under [the BSD Clause 3 License](https://opensourc
 This file is retrieved from [TURBOSQUID](https://www.turbosquid.com/3d-models/male-head-obj/346686) and distributed under [TURBOSQUID's royalty free license](https://blog.turbosquid.com/royalty-free-license/?p=7952)
 by [Mad Mouse Design](https://www.turbosquid.com/Search/Artists/Mad-Mouse-Design).
 
+
+### wave files under spatial_audio_demo/sound
+
+The sample audio files are retrieved from [Music Atelier Amacha](https://amachamusic.chagasi.com/) and all rights of them belongs to Amacha.
