@@ -1,22 +1,29 @@
 name: CI
 on:
   push:
+    branches:
+      - master
   pull_request:
+    branches:
+      - master
   schedule:
     - cron: "0 0 * * *"
 jobs:
-  industrial_ci:
+  build_package:
+    name: Build and test with ${{ matrix.distro }}
+    runs-on: ubuntu-latest
+    continue-on-error: true
     strategy:
       matrix:
-        env:
-          - ROS_DISTRO: melodic
-            ROS_REPO: main
-            CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Debug'
-          - ROS_DISTRO: noetic
-            ROS_REPO: main
-            CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Debug'
-    runs-on: ubuntu-latest
+        distro:
+          - melodic
+          - noetic
     steps:
       - uses: actions/checkout@v1
-      - uses: 'ros-industrial/industrial_ci@master'
-        env: ${{matrix.env}}
+      - uses: ros-tooling/setup-ros@v0.6
+        with:
+          required-ros-distributions: ${{ matrix.distro }}
+      - uses: ros-tooling/action-ros-ci@v0.3
+        with:
+          package-name: spatial_audio_demo
+          target-ros1-distro: ${{ matrix.distro }} 
