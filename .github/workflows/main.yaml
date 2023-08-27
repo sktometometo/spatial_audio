@@ -10,20 +10,17 @@ on:
     - cron: "0 0 * * *"
 jobs:
   build_package:
-    name: Build and test with ${{ matrix.distro }}
+    name: Build and test with noetic
     runs-on: ubuntu-latest
     continue-on-error: true
-    strategy:
-      matrix:
-        distro:
-          - melodic
-          - noetic
     steps:
       - uses: actions/checkout@v1
       - uses: ros-tooling/setup-ros@v0.7
         with:
-          required-ros-distributions: ${{ matrix.distro }}
+          required-ros-distributions: noetic
+      - name: Install catkin tool
+        run: sudo apt-get install python3-catkin-tools
       - uses: ros-tooling/action-ros-ci@0.3.3
         with:
           package-name: spatial_audio_demo
-          target-ros1-distro: ${{ matrix.distro }} 
+          target-ros1-distro: noetic
