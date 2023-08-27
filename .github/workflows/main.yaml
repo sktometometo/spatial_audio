@@ -10,17 +10,16 @@ on:
     - cron: "0 0 * * *"
 jobs:
   build_package:
-    name: Build and test with noetic
+    name: Build and test package
     runs-on: ubuntu-latest
-    continue-on-error: true
+    strategy:
+      matrix:
+        env:
+          - ROS_DISTRO: noetic
+            ROS_REPO: main
+          - ROS_DISTRO: noetic
+            ROS_REPO: testing
     steps:
-      - uses: actions/checkout@v1
-      - uses: ros-tooling/setup-ros@v0.5
-        with:
-          required-ros-distributions: noetic
-      - name: Install catkin tool
-        run: sudo apt-get install python3-catkin-tools
-      - uses: ros-tooling/action-ros-ci@0.3.3
-        with:
-          package-name: spatial_audio_demo
-          target-ros1-distro: noetic
+      - uses: actions/checkout@v3
+      - uses: 'ros-industrial/industrial_ci@master'
+        env: ${{matrix.env}}
