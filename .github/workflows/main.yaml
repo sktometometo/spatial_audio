@@ -23,7 +23,7 @@ jobs:
       - uses: ros-tooling/setup-ros@v0.7
         with:
           required-ros-distributions: ${{ matrix.distro }}
-      - uses: ros-tooling/action-ros-ci@v0.3.3
+      - uses: ros-tooling/action-ros-ci@0.3.3
         with:
           package-name: spatial_audio_demo
           target-ros1-distro: ${{ matrix.distro }} 
