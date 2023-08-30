@@ -1,22 +1,28 @@
 name: CI
 on:
   push:
+    branches:
+      - master
   pull_request:
+    branches:
+      - master
   schedule:
     - cron: "0 0 * * *"
 jobs:
-  industrial_ci:
+  build_package:
+    name: Build and test package
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         env:
-          - ROS_DISTRO: melodic
-            ROS_REPO: main
-            CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Debug'
           - ROS_DISTRO: noetic
             ROS_REPO: main
-            CMAKE_ARGS: '-DCMAKE_BUILD_TYPE=Debug'
-    runs-on: ubuntu-latest
+          - ROS_DISTRO: noetic
+            ROS_REPO: testing
+    env:
+      SDL_VIDEODRIVER: "dummy"
+      SDL_AUDIODRIVER: "disk"
     steps:
-      - uses: actions/checkout@v1
-      - uses: 'ros-industrial/industrial_ci@master'
+      - uses: actions/checkout@v3
+      - uses: "ros-industrial/industrial_ci@master"
         env: ${{matrix.env}}
