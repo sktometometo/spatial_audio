@@ -21,5 +21,8 @@ jobs:
             ROS_REPO: testing
     steps:
       - uses: actions/checkout@v3
+      - name: show audio device
+        run: |
+            aplay -l
       - uses: 'ros-industrial/industrial_ci@master'
         env: ${{matrix.env}}
